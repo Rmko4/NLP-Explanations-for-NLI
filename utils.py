@@ -4,22 +4,19 @@ import datasets
 from transformers import T5Tokenizer
 
 
-def preprocess_function(examples, prefix, tokenizer):
-    # inputs = [prefix + ' \n ' + 'premise: ' + doc for doc in examples['premise']]
-    # inputs2 = [doc for doc in examples['hypothesis']]
+def get_preprocess_function(tokenizer):
+    def _preprocess_fn(examples):
+        input_text = ['premise: ' + premise + ' \n ' + 'hypotheses: ' + hypothesis
+                      for premise, hypothesis in zip(examples['premise'], examples['hypothesis'])]
 
-    inputs = prefix + ' \n ' + 'premise: ' + examples['premise'] + ' \n ' + 'hypotheses: ' + examples['hypothesis']
+        model_inputs = tokenizer(input_text, truncation=True)
 
-    print(inputs)
-    # model_inputs = tokenizer(inputs, max_length=max_input_length, truncation=True)
+        target_text = examples['explanation_1']
+        targets = tokenizer(target_text, truncation=True)
 
-    # # Setup the tokenizer for targets
-    # with tokenizer.as_target_tokenizer():
-    #     labels = tokenizer(examples["summary"], max_length=max_target_length, truncation=True)
-
-    # model_inputs["labels"] = labels["input_ids"]
-    # return model_inputs
-    pass
+        model_inputs["labels"] = targets["input_ids"]
+        return model_inputs
+    return _preprocess_fn
 
 
 def compute_metrics(eval_pred):
