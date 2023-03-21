@@ -6,13 +6,14 @@ from transformers import DataCollatorForSeq2Seq, T5Tokenizer
 
 class ESNLIDataModule(LightningDataModule):
 
-    def __init__(self,
-                 model_name_or_path: str = "google/flan-t5-small",
-                 train_batch_size: int = 16,
-                 eval_batch_size: int = 64,
-                 max_source_length: int = 512,
-                 max_target_length: int = 128,
-                 ):
+    def __init__(
+        self,
+        model_name_or_path: str = "google/flan-t5-small",
+        train_batch_size: int = 16,
+        eval_batch_size: int = 64,
+        max_source_length: int = 512,
+        max_target_length: int = 128,
+    ):
         super().__init__()
         self.model_name_or_path = model_name_or_path
 
@@ -29,7 +30,7 @@ class ESNLIDataModule(LightningDataModule):
         load_dataset("esnli")
         T5Tokenizer.from_pretrained(self.model_name_or_path)
 
-    def setup(self, stage: str = None):
+    def setup(self, stage: str = None) -> None:
         # Loads the dataset and tokenizer
         self.datasets = load_dataset("esnli")
         self.tokenizer = T5Tokenizer.from_pretrained(self.model_name_or_path)
@@ -52,34 +53,50 @@ class ESNLIDataModule(LightningDataModule):
         self.data_collator = DataCollatorForSeq2Seq(
             self.tokenizer, padding=True, label_pad_token_id=-100)
 
-    def train_dataloader(self):
-        return DataLoader(self.datasets['train'], shuffle=True, batch_size=self.train_batch_size, collate_fn=self.data_collator)
+    def train_dataloader(self) -> DataLoader:
+        return DataLoader(
+            self.datasets['train'],
+            shuffle=True,
+            batch_size=self.train_batch_size,
+            collate_fn=self.data_collator
+        )
 
-    def val_dataloader(self):
-        return DataLoader(self.datasets['validation'], batch_size=self.eval_batch_size, collate_fn=self.data_collator)
+    def val_dataloader(self) -> DataLoader:
+        return DataLoader(
+            self.datasets['validation'],
+            batch_size=self.eval_batch_size,
+            collate_fn=self.data_collator
+        )
 
-    def test_dataloader(self):
-        return DataLoader(self.datasets['test'], batch_size=self.eval_batch_size, collate_fn=self.data_collator)
+    def test_dataloader(self) -> DataLoader:
+        return DataLoader(
+            self.datasets['test'],
+            batch_size=self.eval_batch_size,
+            collate_fn=self.data_collator
+        )
 
     def _preprocess_function(self, examples, training=True):
-        input_text = ['premise: ' + premise + ' \n ' + 'hypothesis: ' + hypothesis
-                      for premise, hypothesis in zip(examples['premise'], examples['hypothesis'])]
+        # Create input text by combining premise and hypothesis
+        input_text = [
+            f"premise: {premise}\n" f"hypothesis: {hypothesis}"
+            for premise, hypothesis in zip(examples['premise'], examples['hypothesis'])
+        ]
 
+        # Tokenize input text
         model_inputs = self.tokenizer(
             input_text, truncation=True, max_length=self.max_source_length)
 
         if training:
-            target_text = examples['explanation_1']
+            # Tokenize first explanation and add as "labels" to model inputs
             targets = self.tokenizer(
-                target_text, truncation=True, max_length=self.max_target_length)
-
+                examples['explanation_1'], truncation=True, max_length=self.max_target_length)
             model_inputs["labels"] = targets["input_ids"]
         else:
+            # Tokenize all explanations and assign to explanation_i
             for i in range(1, 4):
-                key_explanation = 'explanation_' + str(i)
-                target_text = examples[key_explanation]
+                key_explanation = f"explanation_{i}"
                 targets = self.tokenizer(
-                    target_text, truncation=True, max_length=self.max_target_length)
+                    examples[key_explanation], truncation=True, max_length=self.max_target_length)
                 model_inputs[key_explanation] = targets["input_ids"]
 
         return model_inputs
