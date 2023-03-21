@@ -19,6 +19,49 @@ def get_preprocess_function(tokenizer):
     return _preprocess_fn
 
 
+def get_preprocess_function_train(tokenizer, max_source_length=512, max_target_length=128):
+    def _preprocess_fn(examples):
+        input_text = ['premise: ' + premise + ' \n ' + 'hypotheses: ' + hypothesis
+                      for premise, hypothesis in zip(examples['premise'], examples['hypothesis'])]
+
+        model_inputs = tokenizer(input_text, truncation=True, max_length=max_source_length)
+
+        # @NOTE do we want to convert the label to a word?
+        target_text = [str(label) + ' \n ' + explanation for label,
+                       explanation in zip(examples['label'], examples['explanation_1'])]
+        targets = tokenizer(target_text, truncation=True, max_length=max_target_length)
+
+        model_inputs['labels'] = targets['input_ids']
+        return model_inputs
+    return _preprocess_fn
+
+
+def get_preprocess_function_val_test(tokenizer, max_source_length=512, max_target_length=128):
+    def _preprocess_fn(examples):
+        input_text = ['premise: ' + premise + ' \n ' + 'hypotheses: ' + hypothesis
+                      for premise, hypothesis in zip(examples['premise'], examples['hypothesis'])]
+
+        model_inputs = tokenizer(input_text, truncation=True, max_length=max_source_length)
+
+        # @NOTE do we want to convert the label to a word?
+        target_text_1, target_text_2, target_text_3 = [], [], []
+        for i, label in enumerate(examples['label']):
+            label = str(label)
+            target_text_1.append(label + ' \n ' + examples['explanation_1'][i])
+            target_text_2.append(label + ' \n ' + examples['explanation_2'][i])
+            target_text_3.append(label + ' \n ' + examples['explanation_3'][i])
+
+        targets_1 = tokenizer(target_text_1, truncation=True, max_length=max_target_length)
+        targets_2 = tokenizer(target_text_2, truncation=True, max_length=max_target_length)
+        targets_3 = tokenizer(target_text_3, truncation=True, max_length=max_target_length)
+
+        model_inputs['labels_1'] = targets_1['input_ids']
+        model_inputs['labels_2'] = targets_2['input_ids']
+        model_inputs['labels_3'] = targets_3['input_ids']
+        return model_inputs
+    return _preprocess_fn
+
+
 def compute_metrics(eval_pred):
     # predictions, labels = eval_pred
     # decoded_preds = tokenizer.batch_decode(predictions, skip_special_tokens=True)
