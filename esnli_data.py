@@ -5,7 +5,6 @@ from transformers import DataCollatorForSeq2Seq, T5Tokenizer
 
 
 class ESNLIDataModule(LightningDataModule):
-
     def __init__(
         self,
         model_name_or_path: str = "google/flan-t5-small",
