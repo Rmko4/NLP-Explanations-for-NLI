@@ -39,22 +39,29 @@ class LitT5(LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx, dataloader_idx=0):
-        outputs = self(**batch)
-        val_loss, logits = outputs[:2]
+        # This is only for validation on rightshifted explanation_1
+        outputs = self.model(
+            input_ids=batch['input_ids'],
+            attention_mask=batch['attention_mask'],
+            labels=batch['labels'])
+        
+        logits = outputs.logits
+        val_loss = outputs.loss
 
-        preds = torch.argmax(logits, axis=1)
 
-        labels_1, labels_2, labels_3 = batch['labels_1'], batch['labels_2'], batch['labels_3']
-        metrics = [self.metric(preds, labels_1), self.metric(
-            preds, labels_2), self.metric(preds, labels_3)]
+        # preds = torch.argmax(logits, axis=1)
 
-        # @NOTE ejj jooo minimizing, maximizing?
-        arg_max = np.argmax(
-            [metrics[0]['eehh wadde'], metrics[1]['eehh wadde'], metrics[2]['eehh wadde']])
-        metric_dict = metrics[arg_max]
+        # labels_1, labels_2, labels_3 = batch['labels_1'], batch['labels_2'], batch['labels_3']
+        # metrics = [self.metric(preds, labels_1), self.metric(
+        #     preds, labels_2), self.metric(preds, labels_3)]
+
+        # # @NOTE ejj jooo minimizing, maximizing?
+        # arg_max = np.argmax(
+        #     [metrics[0]['eehh wadde'], metrics[1]['eehh wadde'], metrics[2]['eehh wadde']])
+        # metric_dict = metrics[arg_max]
 
         self.log('val/loss', val_loss, prog_bar=True)
-        self.log_dict(metric_dict, prog_bar=True)
+        # self.log_dict(metric_dict, prog_bar=True)
 
     def configure_optimizers(self):
         # Might also add lr_scheduler

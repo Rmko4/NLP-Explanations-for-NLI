@@ -32,9 +32,14 @@ class ESNLIDataModule(LightningDataModule):
     def setup(self, stage: str = None) -> None:
         # Loads the dataset and tokenizer
         self.datasets = load_dataset("esnli")
-        self.tokenizer = T5Tokenizer.from_pretrained(self.model_name_or_path)
+        self.tokenizer = T5Tokenizer.from_pretrained(self.model_name_or_path,)
 
         raw_dataset_columns = self.datasets['train'].column_names
+        # Only keep first 1000 examples
+        # self.datasets['train'] = self.datasets['train'].select(range(1000))
+        # self.datasets['validation'] = self.datasets['validation'].select(
+        #     range(1000))
+        # self.datasets['test'] = self.datasets['test'].select(range(1000))
 
         # Applies _preprocess_function to all splits (taking care of the training argument)
         # After all, train dataset only has one explanation.
@@ -50,7 +55,7 @@ class ESNLIDataModule(LightningDataModule):
 
         # Sets the data collator for creating batches
         self.data_collator = DataCollatorForSeq2Seq(
-            self.tokenizer, padding=True, label_pad_token_id=-100)
+            self.tokenizer, padding=True, max_length=self.max_source_length, label_pad_token_id=-100)
 
     def train_dataloader(self) -> DataLoader:
         return DataLoader(
@@ -85,18 +90,20 @@ class ESNLIDataModule(LightningDataModule):
         model_inputs = self.tokenizer(
             input_text, truncation=True, max_length=self.max_source_length)
 
-        if training:
-            # Tokenize first explanation and add as "labels" to model inputs
-            targets = self.tokenizer(
-                examples['explanation_1'], truncation=True, max_length=self.max_target_length)
-            model_inputs["labels"] = targets["input_ids"]
-        else:
-            # Tokenize all explanations and assign to explanation_i
+        # Tokenize first explanation and add as "labels" to model inputs
+        targets = self.tokenizer(
+            examples['explanation_1'], truncation=True, max_length=self.max_target_length)
+        
+        model_inputs["labels"] = targets["input_ids"]
+
+        # Tokenize all explanations and assign to explanation_i
+        if not training:
             for i in range(1, 4):
                 key_explanation = f"explanation_{i}"
                 targets = self.tokenizer(
-                    examples[key_explanation], truncation=True, max_length=self.max_target_length)
+                    examples[key_explanation], truncation=True, padding=True, max_length=self.max_target_length)
                 model_inputs[key_explanation] = targets["input_ids"]
+                # Note that these are zero padded and not -100 padded
 
         return model_inputs
 

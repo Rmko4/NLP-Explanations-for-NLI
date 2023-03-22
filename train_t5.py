@@ -1,9 +1,11 @@
 
+from datetime import datetime
+
 import pytorch_lightning as pl
 import wandb
 from pytorch_lightning import Trainer
-from pytorch_lightning.loggers import WandbLogger
 from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.loggers import WandbLogger
 
 from esnli_data import ESNLIDataModule
 from t5_lit_module import LitT5
@@ -11,10 +13,14 @@ from t5_lit_module import LitT5
 # Make sure to login to wandb before running this script
 # Run: wandb login
 
+# Added datetime to name to avoid conflicts
+run_name = "Fine-Tuning_" + datetime.now().strftime("%Y%m%d-%H%M%S")
+
+
 def main(hparams):
     # Create wandb logger
     wandb_logger = WandbLogger(
-        name="Fine-Tuning",
+        name=run_name,
         project="FLAN-T5-ESNLI",
         save_dir="logs/",
         log_model="all"
@@ -48,7 +54,7 @@ def main(hparams):
     # Create trainer
     trainer = Trainer(
         accelerator='auto',
-        max_epochs=1,
+        max_epochs=3,
         logger=wandb_logger,
         # Do validation every 50 steps
         val_check_interval=50,
