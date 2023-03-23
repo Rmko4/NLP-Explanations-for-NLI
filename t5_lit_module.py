@@ -31,7 +31,7 @@ class LitT5(LightningModule):
         self.tokenizer: T5Tokenizer = T5Tokenizer.from_pretrained(model_name_or_path)
 
         self.blue_metric = textmetrics.BLEUScore()
-        self.bert_metric = textmetrics.BERTScore()
+        # self.bert_metric = textmetrics.BERTScore()
 
         # Does frame inspection so find init args
         self.save_hyperparameters()
@@ -65,15 +65,13 @@ class LitT5(LightningModule):
 
         for i in range(3):
             self.blue_metric(generated_text, reference_texts[i])
-            self.bert_metric(generated_text, reference_texts[i])
+            # self.bert_metric(generated_text, reference_texts[i])
 
         # This is only for validation on rightshifted explanation_1
         outputs = self.model(
             input_ids=batch['input_ids'],
             attention_mask=batch['attention_mask'],
             labels=batch['labels'])
-
-        outputs_str = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)
 
         logits = outputs.logits
         val_loss = outputs.loss
@@ -92,8 +90,7 @@ class LitT5(LightningModule):
         # metric_dict = metrics[arg_max]
 
         self.log_dict({'val/loss': val_loss,
-                       'val/blue': self.blue_metric,
-                       'val/bert': self.bert_metric}, prog_bar=True)
+                       'val/blue': self.blue_metric}, prog_bar=True)
         # self.log_dict(metric_dict, prog_bar=True)
         return {'val_loss': val_loss}
 

@@ -57,7 +57,7 @@ def main(hparams):
 
     # Create trainer
     trainer = Trainer(
-        accelerator='auto',
+        accelerator='cpu',
         devices='auto',
         max_epochs=3,
         logger=wandb_logger,
@@ -69,10 +69,10 @@ def main(hparams):
     )
 
     # Validate
-    trainer.validate(model, data_module)
+    # trainer.validate(model, data_module)
 
     # Train
-    # trainer.fit(model, data_module)
+    trainer.fit(model, data_module)
 
 
 if __name__ == "__main__":
