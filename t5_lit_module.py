@@ -5,8 +5,9 @@ from pytorch_lightning import LightningModule
 from torch.optim import AdamW
 from transformers import T5ForConditionalGeneration
 from transformers.modeling_outputs import Seq2SeqLMOutput
+from torchmetrics.text.bert import BERTScore
 # Import Bertscore, bleuscore and rougescore
-from 
+# from
 
 
 def dummy_metric(pred, gt):
@@ -17,6 +18,7 @@ class LitT5(LightningModule):
     def __init__(
         self,
         model_name_or_path: str = "google/flan-t5-small",
+        tokenizer=None,
         learning_rate: float = 1e-4,
         weight_decay: float = 0.0,
         **kwargs,
@@ -24,12 +26,12 @@ class LitT5(LightningModule):
         super().__init__()
         self.model = T5ForConditionalGeneration.from_pretrained(
             model_name_or_path)
-        self.metric = dummy_metric
+        self.tokenizer = tokenizer
+        self.metric = BERTScore()
 
         # Does frame inspection so find init args
         self.save_hyperparameters()
 
-        
     def forward(self, **inputs):
         return self.model(**inputs)
 
@@ -37,13 +39,12 @@ class LitT5(LightningModule):
         outputs: Seq2SeqLMOutput = self(**batch)
         loss = outputs.loss
 
-
         self.log('train/loss_epoch', loss, on_step=False, on_epoch=True)
         self.log('train/loss_step', loss, on_step=True, on_epoch=False, prog_bar=True)
-        if self.trainer.val_check_interval % 50 == 0 and self.global_step != 0:
-            step_metrics = self.logger.history['train/loss_step']
-            reduced = sum(step_metrics) / len(step_metrics)  
-            self.logger.history['loss_step'] = []
+        # if self.trainer.val_check_interval % 50 == 0 and self.global_step != 0:
+        #     step_metrics = self.logger.history['train/loss_step']
+        #     reduced = sum(step_metrics) / len(step_metrics)
+        #     self.logger.history['loss_step'] = []
 
         # logs metrics for each training_step,
         # and the average across the epoch, to the progress bar and logger
@@ -58,6 +59,9 @@ class LitT5(LightningModule):
             attention_mask=batch['attention_mask'],
             labels=batch['labels'])
         
+        outputs_str = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)
+
+
         logits = outputs.logits
         val_loss = outputs.loss
 

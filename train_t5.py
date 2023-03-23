@@ -58,6 +58,7 @@ def main(hparams):
     # Create trainer
     trainer = Trainer(
         accelerator='auto',
+        devices='auto',
         max_epochs=3,
         logger=wandb_logger,
         log_every_n_steps=10,
@@ -66,7 +67,7 @@ def main(hparams):
         limit_val_batches=10,
         callbacks=callbacks,
     )
-    
+
     # Train
     trainer.fit(model, data_module)
 
