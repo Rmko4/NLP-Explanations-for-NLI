@@ -62,13 +62,16 @@ def main(hparams):
         logger=wandb_logger,
         log_every_n_steps=10,
         # Do validation every 50 steps
-        val_check_interval=50,
-        limit_val_batches=10,
+        val_check_interval=2,
+        limit_val_batches=3,
         callbacks=callbacks,
     )
     
+    # Validate
+    trainer.validate(model, data_module)
+
     # Train
-    trainer.fit(model, data_module)
+    # trainer.fit(model, data_module)
 
 
 if __name__ == "__main__":
