@@ -3,11 +3,11 @@ import torch
 import wandb
 from pytorch_lightning import LightningModule
 from torch.optim import AdamW
-from transformers import T5ForConditionalGeneration
+from transformers import T5ForConditionalGeneration, GenerationConfig, T5Tokenizer
 from transformers.modeling_outputs import Seq2SeqLMOutput
 from torchmetrics.text.bert import BERTScore
 # Import Bertscore, bleuscore and rougescore
-# from
+import torchmetrics.text as textmetrics
 
 
 def dummy_metric(pred, gt):
@@ -26,8 +26,12 @@ class LitT5(LightningModule):
         super().__init__()
         self.model = T5ForConditionalGeneration.from_pretrained(
             model_name_or_path)
-        self.tokenizer = tokenizer
-        self.metric = BERTScore()
+        self.metric = dummy_metric
+        self.generation_config = GenerationConfig.from_pretrained(model_name_or_path)
+        self.tokenizer: T5Tokenizer = T5Tokenizer.from_pretrained(model_name_or_path)
+
+        self.blue_metric = textmetrics.BLEUScore()
+        self.bert_metric = textmetrics.BERTScore()
 
         # Does frame inspection so find init args
         self.save_hyperparameters()
@@ -53,21 +57,30 @@ class LitT5(LightningModule):
         return {"loss": loss}
 
     def validation_step(self, batch, batch_idx, dataloader_idx=0):
+        outputs = self.model.generate(batch['input_ids'], self.generation_config)
+        generated_text = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)
+
+        reference_texts = [self.tokenizer.batch_decode(
+            batch[f'explanation_{i}'], skip_special_tokens=True) for i in range(1, 4)]
+
+        for i in range(3):
+            self.blue_metric(generated_text, reference_texts[i])
+            self.bert_metric(generated_text, reference_texts[i])
+
         # This is only for validation on rightshifted explanation_1
         outputs = self.model(
             input_ids=batch['input_ids'],
             attention_mask=batch['attention_mask'],
             labels=batch['labels'])
-        
-        outputs_str = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)
 
+        outputs_str = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)
 
         logits = outputs.logits
         val_loss = outputs.loss
 
         # Make sure to map pad token to -100
 
-        preds = torch.argmax(logits, dim=-1)
+        # preds = torch.argmax(logits, dim=-1)
 
         # labels_1, labels_2, labels_3 = batch['labels_1'], batch['labels_2'], batch['labels_3']
         # metrics = [self.metric(preds, labels_1), self.metric(
@@ -78,7 +91,9 @@ class LitT5(LightningModule):
         #     [metrics[0]['eehh wadde'], metrics[1]['eehh wadde'], metrics[2]['eehh wadde']])
         # metric_dict = metrics[arg_max]
 
-        self.log('val/loss', val_loss, prog_bar=True)
+        self.log_dict({'val/loss': val_loss,
+                       'val/blue': self.blue_metric,
+                       'val/bert': self.bert_metric}, prog_bar=True)
         # self.log_dict(metric_dict, prog_bar=True)
         return {'val_loss': val_loss}
 
