@@ -1,9 +1,10 @@
 import numpy as np
 import torch
+import wandb
 from pytorch_lightning import LightningModule
+from torch.optim import AdamW
 from transformers import T5ForConditionalGeneration
 from transformers.modeling_outputs import Seq2SeqLMOutput
-from torch.optim import AdamW
 
 
 def dummy_metric(pred, gt):
@@ -26,17 +27,19 @@ class LitT5(LightningModule):
         # Does frame inspection so find init args
         self.save_hyperparameters()
 
+        
     def forward(self, **inputs):
         return self.model(**inputs)
 
     def training_step(self, batch, batch_idx):
         outputs: Seq2SeqLMOutput = self(**batch)
         loss = outputs.loss
+
         # logs metrics for each training_step,
         # and the average across the epoch, to the progress bar and logger
-        self.log('train/loss', loss, on_step=True,
-                 on_epoch=True, prog_bar=True)
-        return loss
+        self.log('train/loss', loss, on_step=False,
+                 on_epoch=True, prog_bar=True, logger=True)
+        return {"loss": loss}
 
     def validation_step(self, batch, batch_idx, dataloader_idx=0):
         # This is only for validation on rightshifted explanation_1
@@ -62,6 +65,7 @@ class LitT5(LightningModule):
 
         self.log('val/loss', val_loss, prog_bar=True)
         # self.log_dict(metric_dict, prog_bar=True)
+        return {'val_loss': val_loss}
 
     def configure_optimizers(self):
         # Might also add lr_scheduler

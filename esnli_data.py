@@ -1,4 +1,4 @@
-from datasets import load_dataset
+from datasets import load_dataset, load_from_disk
 from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader
 from transformers import DataCollatorForSeq2Seq, T5Tokenizer
@@ -8,6 +8,7 @@ class ESNLIDataModule(LightningDataModule):
     def __init__(
         self,
         model_name_or_path: str = "google/flan-t5-small",
+        dataset_path: str = None,
         train_batch_size: int = 16,
         eval_batch_size: int = 64,
         max_source_length: int = 512,
@@ -22,36 +23,20 @@ class ESNLIDataModule(LightningDataModule):
         self.max_source_length = max_source_length
         self.max_target_length = max_target_length
 
+        self.dataset_name_or_path = 'esnli' \
+            if dataset_path is None else dataset_path
+
+        self.tokenizer = T5Tokenizer.from_pretrained(self.model_name_or_path)
+
         self.save_hyperparameters()
 
     def prepare_data(self) -> None:
-        # Downloads the dataset if not on disk
-        load_dataset("esnli")
-        T5Tokenizer.from_pretrained(self.model_name_or_path)
+        # Downloads and processes the dataset if not on disk
+        self._load_processed_dataset()
 
     def setup(self, stage: str = None) -> None:
-        # Loads the dataset and tokenizer
-        self.datasets = load_dataset("esnli")
-        self.tokenizer = T5Tokenizer.from_pretrained(self.model_name_or_path,)
-
-        raw_dataset_columns = self.datasets['train'].column_names
-        # Only keep first 1000 examples
-        # self.datasets['train'] = self.datasets['train'].select(range(1000))
-        # self.datasets['validation'] = self.datasets['validation'].select(
-        #     range(1000))
-        # self.datasets['test'] = self.datasets['test'].select(range(1000))
-
-        # Applies _preprocess_function to all splits (taking care of the training argument)
-        # After all, train dataset only has one explanation.
-        for split in self.datasets.keys():
-            self.datasets[split] = self.datasets[split].map(
-                lambda examples: self._preprocess_function(
-                    examples, training=(split == "train")),
-                batched=True,
-                remove_columns=raw_dataset_columns
-            )
-
-        self.datasets.set_format(type='torch')
+        # Should load the now cached or manually saved to disk dataset
+        self.datasets = self._load_processed_dataset()
 
         # Sets the data collator for creating batches
         self.data_collator = DataCollatorForSeq2Seq(
@@ -62,22 +47,53 @@ class ESNLIDataModule(LightningDataModule):
             self.datasets['train'],
             shuffle=True,
             batch_size=self.train_batch_size,
-            collate_fn=self.data_collator
+            collate_fn=self.data_collator,
         )
 
     def val_dataloader(self) -> DataLoader:
         return DataLoader(
             self.datasets['validation'],
             batch_size=self.eval_batch_size,
-            collate_fn=self.data_collator
+            collate_fn=self.data_collator,
         )
 
     def test_dataloader(self) -> DataLoader:
         return DataLoader(
             self.datasets['test'],
             batch_size=self.eval_batch_size,
-            collate_fn=self.data_collator
+            collate_fn=self.data_collator,
         )
+
+    def _load_processed_dataset(self):
+        # Note this function does not change state of self
+        # Downloads the dataset if not on disk
+
+        def load_and_process():
+            datasets = load_dataset('esnli')
+
+            raw_dataset_columns = datasets['train'].column_names
+
+            for split in datasets.keys():
+                datasets[split] = datasets[split].map(
+                    lambda examples: self._preprocess_function(
+                        examples, training=(split == "train")),
+                    batched=True,
+                    remove_columns=raw_dataset_columns
+                )
+
+            datasets.set_format(type='torch')
+            return datasets
+
+        if self.dataset_name_or_path == 'esnli':
+            datasets = load_and_process()
+        else:
+            try:
+                datasets = load_from_disk(self.dataset_name_or_path)
+            except FileNotFoundError:
+                datasets = load_and_process()
+                datasets.save_to_disk(self.dataset_name_or_path)
+
+        return datasets
 
     def _preprocess_function(self, examples, training=True):
         # Create input text by combining premise and hypothesis
@@ -93,7 +109,7 @@ class ESNLIDataModule(LightningDataModule):
         # Tokenize first explanation and add as "labels" to model inputs
         targets = self.tokenizer(
             examples['explanation_1'], truncation=True, max_length=self.max_target_length)
-        
+
         model_inputs["labels"] = targets["input_ids"]
 
         # Tokenize all explanations and assign to explanation_i
@@ -101,7 +117,7 @@ class ESNLIDataModule(LightningDataModule):
             for i in range(1, 4):
                 key_explanation = f"explanation_{i}"
                 targets = self.tokenizer(
-                    examples[key_explanation], truncation=True, padding=True, max_length=self.max_target_length)
+                    examples[key_explanation], truncation=True, padding='max_length', max_length=self.max_target_length)
                 model_inputs[key_explanation] = targets["input_ids"]
                 # Note that these are zero padded and not -100 padded
 

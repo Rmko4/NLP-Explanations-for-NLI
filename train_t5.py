@@ -15,6 +15,7 @@ from t5_lit_module import LitT5
 
 # Added datetime to name to avoid conflicts
 run_name = "Fine-Tuning_" + datetime.now().strftime("%Y%m%d-%H%M%S")
+data_path = "data/esnli/"
 
 
 def main(hparams):
@@ -33,7 +34,7 @@ def main(hparams):
     # wandb_logger.experiment.config.update({key1: val1, key2: val2})
 
     # Create data module
-    data_module = ESNLIDataModule(train_batch_size=8, eval_batch_size=64)
+    data_module = ESNLIDataModule(train_batch_size=8, eval_batch_size=16, dataset_path=data_path)
 
     # Create model
     model = LitT5()
@@ -56,11 +57,13 @@ def main(hparams):
         accelerator='auto',
         max_epochs=3,
         logger=wandb_logger,
+        log_every_n_steps=10,
         # Do validation every 50 steps
         val_check_interval=50,
+        limit_val_batches=10,
         callbacks=callbacks,
     )
-
+    
     # Train
     trainer.fit(model, data_module)
 
