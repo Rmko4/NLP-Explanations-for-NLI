@@ -5,6 +5,8 @@ from pytorch_lightning import LightningModule
 from torch.optim import AdamW
 from transformers import T5ForConditionalGeneration
 from transformers.modeling_outputs import Seq2SeqLMOutput
+# Import Bertscore, bleuscore and rougescore
+from 
 
 
 def dummy_metric(pred, gt):
@@ -35,10 +37,18 @@ class LitT5(LightningModule):
         outputs: Seq2SeqLMOutput = self(**batch)
         loss = outputs.loss
 
+
+        self.log('train/loss_epoch', loss, on_step=False, on_epoch=True)
+        self.log('train/loss_step', loss, on_step=True, on_epoch=False, prog_bar=True)
+        if self.trainer.val_check_interval % 50 == 0 and self.global_step != 0:
+            step_metrics = self.logger.history['train/loss_step']
+            reduced = sum(step_metrics) / len(step_metrics)  
+            self.logger.history['loss_step'] = []
+
         # logs metrics for each training_step,
         # and the average across the epoch, to the progress bar and logger
-        self.log('train/loss', loss, on_step=False,
-                 on_epoch=True, prog_bar=True, logger=True)
+        # self.log('train/loss', loss, on_step=True,
+        #          on_epoch=True, prog_bar=True, logger=True)
         return {"loss": loss}
 
     def validation_step(self, batch, batch_idx, dataloader_idx=0):
@@ -51,8 +61,9 @@ class LitT5(LightningModule):
         logits = outputs.logits
         val_loss = outputs.loss
 
+        # Make sure to map pad token to -100
 
-        # preds = torch.argmax(logits, axis=1)
+        preds = torch.argmax(logits, dim=-1)
 
         # labels_1, labels_2, labels_3 = batch['labels_1'], batch['labels_2'], batch['labels_3']
         # metrics = [self.metric(preds, labels_1), self.metric(

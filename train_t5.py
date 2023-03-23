@@ -10,12 +10,15 @@ from pytorch_lightning.loggers import WandbLogger
 from esnli_data import ESNLIDataModule
 from t5_lit_module import LitT5
 
+import os
+
 # Make sure to login to wandb before running this script
 # Run: wandb login
 
 # Added datetime to name to avoid conflicts
-run_name = "Fine-Tuning_" + datetime.now().strftime("%Y%m%d-%H%M%S")
-data_path = "data/esnli/"
+run_name = "Fine-Tuning_" + datetime.now().strftime("%m%d-%H:%M:%S")
+data_path = "~/datasets/esnli/"
+data_path = os.path.expanduser(data_path)
 
 
 def main(hparams):

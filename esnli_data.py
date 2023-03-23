@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from datasets import load_dataset, load_from_disk
 from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader
@@ -28,7 +30,7 @@ class ESNLIDataModule(LightningDataModule):
 
         self.tokenizer = T5Tokenizer.from_pretrained(self.model_name_or_path)
 
-        self.save_hyperparameters()
+        self.save_hyperparameters(ignore=['dataset_path'])
 
     def prepare_data(self) -> None:
         # Downloads and processes the dataset if not on disk
@@ -87,6 +89,8 @@ class ESNLIDataModule(LightningDataModule):
         if self.dataset_name_or_path == 'esnli':
             datasets = load_and_process()
         else:
+            # There might be many reason for failing to read from disk
+            # Therefore, we proceed according to exception
             try:
                 datasets = load_from_disk(self.dataset_name_or_path)
             except FileNotFoundError:
