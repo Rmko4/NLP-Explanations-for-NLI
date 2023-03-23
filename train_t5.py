@@ -37,7 +37,7 @@ def main(hparams):
     # wandb_logger.experiment.config.update({key1: val1, key2: val2})
 
     # Create data module
-    data_module = ESNLIDataModule(train_batch_size=16, eval_batch_size=16, dataset_path=data_path)
+    data_module = ESNLIDataModule(train_batch_size=64, eval_batch_size=64, dataset_path=data_path)
 
     # Create model
     model = LitT5()
@@ -58,14 +58,14 @@ def main(hparams):
 
     # Create trainer
     trainer = Trainer(
-        accelerator='cpu',
+        accelerator='gpu',
         devices='auto',
         max_epochs=3,
         logger=wandb_logger,
         log_every_n_steps=10,
         # Do validation every 50 steps
-        val_check_interval=1000,
-        # limit_val_batches=3,
+        val_check_interval=200,
+        limit_val_batches=20,
         callbacks=callbacks,
     )
 
