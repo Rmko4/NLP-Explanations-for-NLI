@@ -29,7 +29,10 @@ class LitT5(LightningModule):
         self.tokenizer: T5Tokenizer = T5Tokenizer.from_pretrained(model_name_or_path)
 
         self.blue_metric = textmetrics.BLEUScore()
-        self.bert_metric = textmetrics.BERTScore()
+        self.rouge_metric = textmetrics.ROUGEScore()
+        # self.bert_metric = textmetrics.BERTScore()
+
+        self.train_loss_history = []
 
         # Does frame inspection so find init args
         self.save_hyperparameters()
@@ -42,13 +45,16 @@ class LitT5(LightningModule):
         outputs: Seq2SeqLMOutput = self(**batch)
         loss = outputs.loss
 
-
         self.log('train/loss_epoch', loss, on_step=False, on_epoch=True)
         self.log('train/loss_step', loss, on_step=True, on_epoch=False, prog_bar=True)
-        # if self.trainer.val_check_interval % 50 == 0 and self.global_step != 0:
-        #     step_metrics = self.logger.history['train/loss_step']
-        #     reduced = sum(step_metrics) / len(step_metrics)  
-        #     self.logger.history['loss_step'] = []
+
+        self.train_loss_history.append(loss.item())
+        
+        if self.global_step % self.trainer.log_every_n_steps == 0 and self.global_step != 0:
+            step_metrics = self.train_loss_history
+            reduced = sum(step_metrics) / len(step_metrics)  
+            self.log('train/loss_step_reduced', reduced, on_step=True, on_epoch=False, prog_bar=True)
+            self.train_loss_history = []
 
         # logs metrics for each training_step,
         # and the average across the epoch, to the progress bar and logger
@@ -64,10 +70,11 @@ class LitT5(LightningModule):
 
         for i in range(3):
             self.blue_metric(generated_text, reference_texts[i])
-            self.bert_metric(generated_text, reference_texts[i])
+            self.rouge_metric(generated_text, reference_texts[i])
+            # self.bert_metric(generated_text, reference_texts[i])
 
         # This is only for validation on rightshifted explanation_1
-        outputs = self.model(
+        outputs: Seq2SeqLMOutput = self.model(
             input_ids=batch['input_ids'],
             attention_mask=batch['attention_mask'],
             labels=batch['labels'])
@@ -90,10 +97,10 @@ class LitT5(LightningModule):
 
         self.log_dict({'val/loss': val_loss,
                        'val/blue': self.blue_metric,
-                       'val/bert': self.bert_metric}
+                       'val/rouge': self.rouge_metric,}
                        , prog_bar=True)
         # self.log_dict(metric_dict, prog_bar=True)
-        return {'val_loss': val_loss}
+        return {'val_loss': val_loss, 'val_blue': self.blue_metric, 'val_rouge': self.rouge_metric}
 
     def configure_optimizers(self):
         # Might also add lr_scheduler

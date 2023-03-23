@@ -37,7 +37,7 @@ def main(hparams):
     # wandb_logger.experiment.config.update({key1: val1, key2: val2})
 
     # Create data module
-    data_module = ESNLIDataModule(train_batch_size=8, eval_batch_size=16, dataset_path=data_path)
+    data_module = ESNLIDataModule(train_batch_size=16, eval_batch_size=16, dataset_path=data_path)
 
     # Create model
     model = LitT5()
@@ -48,12 +48,13 @@ def main(hparams):
         dirpath='checkpoints/',
         # No f string formating yet
         filename='esnli-{epoch:02d}-{val/loss:.2f}',
+        every_n_train_steps=1000,
     )
 
     callbacks = [checkpoint_callback]
 
     # Note that default behaviour does checkpointing for state of last training epoch
-    callbacks = None
+    # callbacks = None
 
     # Create trainer
     trainer = Trainer(
@@ -62,16 +63,16 @@ def main(hparams):
         logger=wandb_logger,
         log_every_n_steps=10,
         # Do validation every 50 steps
-        val_check_interval=2,
-        limit_val_batches=3,
+        val_check_interval=1000,
+        # limit_val_batches=3,
         callbacks=callbacks,
     )
     
     # Validate
-    trainer.validate(model, data_module)
+    # trainer.validate(model, data_module)
 
     # Train
-    # trainer.fit(model, data_module)
+    trainer.fit(model, data_module)
 
 
 if __name__ == "__main__":
