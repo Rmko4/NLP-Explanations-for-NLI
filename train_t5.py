@@ -58,7 +58,8 @@ def main(hparams):
 
     # Create trainer
     trainer = Trainer(
-        accelerator='auto',
+        accelerator='cpu',
+        devices='auto',
         max_epochs=3,
         logger=wandb_logger,
         log_every_n_steps=10,
@@ -67,7 +68,7 @@ def main(hparams):
         # limit_val_batches=3,
         callbacks=callbacks,
     )
-    
+
     # Validate
     # trainer.validate(model, data_module)
 

@@ -5,6 +5,7 @@ from pytorch_lightning import LightningModule
 from torch.optim import AdamW
 from transformers import T5ForConditionalGeneration, GenerationConfig, T5Tokenizer
 from transformers.modeling_outputs import Seq2SeqLMOutput
+from torchmetrics.text.bert import BERTScore
 # Import Bertscore, bleuscore and rougescore
 import torchmetrics.text as textmetrics
 
@@ -17,6 +18,7 @@ class LitT5(LightningModule):
     def __init__(
         self,
         model_name_or_path: str = "google/flan-t5-small",
+        tokenizer=None,
         learning_rate: float = 1e-4,
         weight_decay: float = 0.0,
         **kwargs,
@@ -37,7 +39,6 @@ class LitT5(LightningModule):
         # Does frame inspection so find init args
         self.save_hyperparameters()
 
-        
     def forward(self, **inputs):
         return self.model(**inputs)
 
@@ -66,7 +67,8 @@ class LitT5(LightningModule):
         outputs = self.model.generate(batch['input_ids'], self.generation_config)
         generated_text = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)
 
-        reference_texts = [self.tokenizer.batch_decode(batch[f'explanation_{i}'], skip_special_tokens=True) for i in range(1,4)]
+        reference_texts = [self.tokenizer.batch_decode(
+            batch[f'explanation_{i}'], skip_special_tokens=True) for i in range(1, 4)]
 
         for i in range(3):
             self.blue_metric(generated_text, reference_texts[i])
@@ -78,7 +80,7 @@ class LitT5(LightningModule):
             input_ids=batch['input_ids'],
             attention_mask=batch['attention_mask'],
             labels=batch['labels'])
-        
+
         logits = outputs.logits
         val_loss = outputs.loss
 
