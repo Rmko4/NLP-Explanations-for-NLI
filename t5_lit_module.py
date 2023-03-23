@@ -31,7 +31,7 @@ class LitT5(LightningModule):
         self.tokenizer: T5Tokenizer = T5Tokenizer.from_pretrained(model_name_or_path)
 
         self.blue_metric = textmetrics.BLEUScore()
-        self.rouge_metric = textmetrics.ROUGEScore()
+        # self.rouge_metric = textmetrics.ROUGEScore()
         # self.bert_metric = textmetrics.BERTScore()
 
         self.train_loss_history = []
@@ -72,7 +72,7 @@ class LitT5(LightningModule):
 
         for i in range(3):
             self.blue_metric(generated_text, reference_texts[i])
-            self.rouge_metric(generated_text, reference_texts[i])
+            # self.rouge_metric(generated_text, reference_texts[i])
             # self.bert_metric(generated_text, reference_texts[i])
 
         # This is only for validation on rightshifted explanation_1
@@ -98,11 +98,10 @@ class LitT5(LightningModule):
         # metric_dict = metrics[arg_max]
 
         self.log_dict({'val/loss': val_loss,
-                       'val/blue': self.blue_metric,
-                       'val/rouge': self.rouge_metric,}
+                       'val/blue': self.blue_metric,}
                        , prog_bar=True)
         # self.log_dict(metric_dict, prog_bar=True)
-        return {'val_loss': val_loss, 'val_blue': self.blue_metric, 'val_rouge': self.rouge_metric}
+        return {'val_loss': val_loss, 'val_blue': self.blue_metric}
 
     def configure_optimizers(self):
         # Might also add lr_scheduler
