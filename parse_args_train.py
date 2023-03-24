@@ -9,6 +9,10 @@ def get_args():
                         help='The name or path of the pre-trained T5 model to fine-tune.')
     parser.add_argument('--data_path', type=str, default='~/datasets/esnli/',
                         help='The path to the ESNLI dataset.')
+    parser.add_argument('--checkpoint_path', type=str, default='checkpoints/',
+                        help='The path to the directory where checkpoints will be saved.')
+    parser.add_argument('--learning_rate', type=float, default=1e-4,
+                        help='The learning rate to use for training.')
     parser.add_argument('--train_batch_size', type=int, default=8,
                         help='The batch size to use for training.')
     parser.add_argument('--eval_batch_size', type=int, default=8,

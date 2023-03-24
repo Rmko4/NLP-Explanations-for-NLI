@@ -48,12 +48,13 @@ def main(hparams):
     )
 
     # Create model
-    model = LitT5(model_name_or_path=hparams.model_name)
+    model = LitT5(model_name_or_path=hparams.model_name,
+                  learning_rate=hparams.learning_rate)
 
     # Create checkpoint callback
     checkpoint_callback = ModelCheckpoint(
         monitor='val/loss',
-        dirpath='checkpoints/',
+        dirpath=hparams.checkpoint_path,
         # No f string formating yet
         filename='esnli-{epoch:02d}-{val/loss:.2f}',
         every_n_train_steps=hparams.val_check_interval,

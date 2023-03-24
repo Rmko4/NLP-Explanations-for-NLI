@@ -24,11 +24,13 @@ cd $TMPDIR/NLP-Explanations-for-NLI/
 python3 train_t5.py \
 --model_name google/flan-t5-base \
 --data_path $TMPDIR/datasets/esnli \
---train_batch_size 8 \
---eval_batch_size 8 \
+--checkpoint_path /data/$USER/checkpoints/ \
+--learning_rate 1e-4 \
+--train_batch_size 16 \
+--eval_batch_size 16 \
 --max_epochs 3 \
---log_every_n_steps 50 \
---val_check_interval 1000 \
+--log_every_n_steps 200 \
+--val_check_interval 2000 \
 --limit_val_batches 50 \
 --n_text_samples 10 \
---log_every_n_generated 20
+--log_every_n_generated 49
