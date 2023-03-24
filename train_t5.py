@@ -9,6 +9,7 @@ from pytorch_lightning.loggers import WandbLogger
 
 from esnli_data import ESNLIDataModule
 from t5_lit_module import LitT5
+from callbacks import LogGeneratedTextCallback
 
 import os
 
@@ -37,7 +38,8 @@ def main(hparams):
     # wandb_logger.experiment.config.update({key1: val1, key2: val2})
 
     # Create data module
-    data_module = ESNLIDataModule(train_batch_size=64, eval_batch_size=64, dataset_path=data_path)
+    data_module = ESNLIDataModule(
+        train_batch_size=64, eval_batch_size=4, dataset_path=data_path)
 
     # Create model
     model = LitT5()
@@ -50,19 +52,20 @@ def main(hparams):
         filename='esnli-{epoch:02d}-{val/loss:.2f}',
         every_n_train_steps=1000,
     )
+    log_generated_text_callback = LogGeneratedTextCallback(n_samples=10)
 
-    callbacks = [checkpoint_callback]
+    callbacks = [checkpoint_callback, log_generated_text_callback]
 
     # Note that default behaviour does checkpointing for state of last training epoch
     # callbacks = None
 
     # Create trainer
     trainer = Trainer(
-        accelerator='gpu',
+        accelerator='auto',
         devices='auto',
         max_epochs=3,
         logger=wandb_logger,
-        log_every_n_steps=10,
+        log_every_n_steps=50,
         # Do validation every 50 steps
         val_check_interval=200,
         limit_val_batches=20,
@@ -70,10 +73,10 @@ def main(hparams):
     )
 
     # Validate
-    # trainer.validate(model, data_module)
+    trainer.validate(model, data_module)
 
     # Train
-    trainer.fit(model, data_module)
+    # trainer.fit(model, data_module)
 
 
 if __name__ == "__main__":

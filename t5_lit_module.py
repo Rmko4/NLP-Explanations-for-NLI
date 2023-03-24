@@ -18,7 +18,6 @@ class LitT5(LightningModule):
     def __init__(
         self,
         model_name_or_path: str = "google/flan-t5-small",
-        tokenizer=None,
         learning_rate: float = 1e-4,
         weight_decay: float = 0.0,
         **kwargs,
@@ -27,8 +26,10 @@ class LitT5(LightningModule):
         self.model = T5ForConditionalGeneration.from_pretrained(
             model_name_or_path)
         self.metric = dummy_metric
-        self.generation_config = GenerationConfig.from_pretrained(model_name_or_path)
-        self.tokenizer: T5Tokenizer = T5Tokenizer.from_pretrained(model_name_or_path)
+        self.generation_config = GenerationConfig.from_pretrained(
+            model_name_or_path)
+        self.tokenizer: T5Tokenizer = T5Tokenizer.from_pretrained(
+            model_name_or_path)
 
         self.blue_metric = textmetrics.BLEUScore()
         # self.rouge_metric = textmetrics.ROUGEScore()
@@ -47,14 +48,16 @@ class LitT5(LightningModule):
         loss = outputs.loss
 
         self.log('train/loss_epoch', loss, on_step=False, on_epoch=True)
-        self.log('train/loss_step', loss, on_step=True, on_epoch=False, prog_bar=True)
+        self.log('train/loss_step', loss, on_step=True,
+                 on_epoch=False, prog_bar=True)
 
         self.train_loss_history.append(loss.item())
-        
+
         if self.global_step % self.trainer.log_every_n_steps == 0 and self.global_step != 0:
             step_metrics = self.train_loss_history
-            reduced = sum(step_metrics) / len(step_metrics)  
-            self.log('train/loss_step_reduced', reduced, on_step=True, on_epoch=False, prog_bar=True)
+            reduced = sum(step_metrics) / len(step_metrics)
+            self.log('train/loss_step_reduced', reduced,
+                     on_step=True, on_epoch=False, prog_bar=True)
             self.train_loss_history = []
 
         # logs metrics for each training_step,
@@ -64,11 +67,15 @@ class LitT5(LightningModule):
         return {"loss": loss}
 
     def validation_step(self, batch, batch_idx, dataloader_idx=0):
-        outputs = self.model.generate(batch['input_ids'], self.generation_config)
-        generated_text = self.tokenizer.batch_decode(outputs, skip_special_tokens=True)
+        outputs = self.model.generate(
+            batch['input_ids'], self.generation_config)
 
+        generated_text = self.tokenizer.batch_decode(
+            outputs, skip_special_tokens=True)
         reference_texts = [self.tokenizer.batch_decode(
             batch[f'explanation_{i}'], skip_special_tokens=True) for i in range(1, 4)]
+        input_text = self.tokenizer.batch_decode(
+            batch['input_ids'], skip_special_tokens=True)
 
         for i in range(3):
             self.blue_metric(generated_text, reference_texts[i])
@@ -98,10 +105,13 @@ class LitT5(LightningModule):
         # metric_dict = metrics[arg_max]
 
         self.log_dict({'val/loss': val_loss,
-                       'val/blue': self.blue_metric,}
-                       , prog_bar=True)
+                       'val/blue': self.blue_metric, }, prog_bar=True)
         # self.log_dict(metric_dict, prog_bar=True)
-        return {'val_loss': val_loss, 'val_blue': self.blue_metric}
+        return {'val_loss': val_loss,
+                'val_blue': self.blue_metric,
+                'input_text': input_text,
+                'generated_text': generated_text,
+                'reference_texts': reference_texts}
 
     def configure_optimizers(self):
         # Might also add lr_scheduler
