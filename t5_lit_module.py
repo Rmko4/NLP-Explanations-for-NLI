@@ -92,7 +92,7 @@ class LitT5(LightningModule):
             attention_mask=batch['attention_mask'],
             labels=batch['labels'])
 
-        val_loss = outputs.loss
+        val_loss = outputs.loss.to(torch.float32)
         self.perplexity_metric.update(outputs.logits, batch['labels'])
 
         self.log_dict({'val/loss': val_loss,
