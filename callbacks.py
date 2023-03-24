@@ -9,8 +9,10 @@ from pytorch_lightning.loggers import WandbLogger
 
 
 class LogGeneratedTextCallback(Callback):
-    def __init__(self, n_samples: int = 20) -> None:
+    def __init__(self, n_samples: int = 20, log_every_n_steps=20) -> None:
         self.n_samples = n_samples
+        self.processed_batches = 0
+        self.log_every_n_steps = log_every_n_steps
 
     def on_validation_batch_end(
             self,
@@ -21,10 +23,9 @@ class LogGeneratedTextCallback(Callback):
             batch_idx: int,
             dataloader_idx: int = 0,):
         """Called when the validation batch ends."""
-
+        self.processed_batches += 1
         # `outputs` comes from `LightningModule.validation_step`
-        if batch_idx == 0:
-
+        if self.processed_batches % self.log_every_n_steps == 0:
             # Create a dictionary with the required data
             data = {
                 'input_text': outputs['input_text'][:self.n_samples],

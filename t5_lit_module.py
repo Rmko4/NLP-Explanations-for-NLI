@@ -33,7 +33,8 @@ class LitT5(LightningModule):
             model_name_or_path)
 
         self.blue_metric = textmetrics.BLEUScore()
-        # self.rouge_metric = textmetrics.ROUGEScore()
+        self.rouge_metric = textmetrics.ROUGEScore()
+        self.perplexity_metric = textmetrics.Perplexity(ignore_index=-100)
         # self.bert_metric = textmetrics.BERTScore()
 
         self.train_loss_history = []
@@ -68,20 +69,22 @@ class LitT5(LightningModule):
         return {"loss": loss}
 
     def validation_step(self, batch, batch_idx, dataloader_idx=0):
-        outputs = self.model.generate(
+        generated_out = self.model.generate(
             batch['input_ids'], self.generation_config)
 
         generated_text = self.tokenizer.batch_decode(
-            outputs, skip_special_tokens=True)
+            generated_out, skip_special_tokens=True)
         reference_texts = [self.tokenizer.batch_decode(
             batch[f'explanation_{i}'], skip_special_tokens=True) for i in range(1, 4)]
         input_text = self.tokenizer.batch_decode(
             batch['input_ids'], skip_special_tokens=True)
 
-        for i in range(3):
-            self.blue_metric(generated_text, reference_texts[i])
-            # self.rouge_metric(generated_text, reference_texts[i])
-            # self.bert_metric(generated_text, reference_texts[i])
+        # Update suffices as we are only interested in epoch score
+        self.blue_metric.update(generated_text, reference_texts)
+
+        # for i in range(3):
+        #     self.rouge_metric.update(
+        #         generated_text, reference_texts[i])
 
         # This is only for validation on rightshifted explanation_1
         outputs: Seq2SeqLMOutput = self.model(
@@ -89,27 +92,16 @@ class LitT5(LightningModule):
             attention_mask=batch['attention_mask'],
             labels=batch['labels'])
 
-        logits = outputs.logits
         val_loss = outputs.loss
-
-        # Make sure to map pad token to -100
-
-        # preds = torch.argmax(logits, dim=-1)
-
-        # labels_1, labels_2, labels_3 = batch['labels_1'], batch['labels_2'], batch['labels_3']
-        # metrics = [self.metric(preds, labels_1), self.metric(
-        #     preds, labels_2), self.metric(preds, labels_3)]
-
-        # # @NOTE ejj jooo minimizing, maximizing?
-        # arg_max = np.argmax(
-        #     [metrics[0]['eehh wadde'], metrics[1]['eehh wadde'], metrics[2]['eehh wadde']])
-        # metric_dict = metrics[arg_max]
+        self.perplexity_metric.update(outputs.logits, batch['labels'])
 
         self.log_dict({'val/loss': val_loss,
-                       'val/blue': self.blue_metric, }, prog_bar=True)
+                       'val/blue': self.blue_metric,
+                       'val/perplexity': self.perplexity_metric,
+                       }, prog_bar=True)
+        # self.log_dict(self.rouge_metric, prog_bar=True)
         # self.log_dict(metric_dict, prog_bar=True)
         return {'val_loss': val_loss,
-                'val_blue': self.blue_metric,
                 'input_text': input_text,
                 'generated_text': generated_text,
                 'reference_texts': reference_texts}

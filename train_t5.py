@@ -1,5 +1,6 @@
 
 from datetime import datetime
+import os
 
 import pytorch_lightning as pl
 import wandb
@@ -10,16 +11,17 @@ from pytorch_lightning.loggers import WandbLogger
 from esnli_data import ESNLIDataModule
 from t5_lit_module import LitT5
 from callbacks import LogGeneratedTextCallback
+from parse_args_train import get_args
 
-import os
 
 # Make sure to login to wandb before running this script
 # Run: wandb login
 
 # Added datetime to name to avoid conflicts
 run_name = "Fine-Tuning_" + datetime.now().strftime("%m%d-%H:%M:%S")
-data_path = "~/datasets/esnli/"
-data_path = os.path.expanduser(data_path)
+# data_path = "~/datasets/esnli/"
+# data_path = os.path.expanduser(data_path)
+# model_name = "google/flan-t5-base"
 
 
 def main(hparams):
@@ -39,10 +41,14 @@ def main(hparams):
 
     # Create data module
     data_module = ESNLIDataModule(
-        train_batch_size=8, eval_batch_size=8, dataset_path=data_path)
+        model_name_or_path=hparams.model_name,
+        dataset_path=hparams.data_path,
+        train_batch_size=hparams.train_batch_size,
+        eval_batch_size=hparams.eval_batch_size,
+    )
 
     # Create model
-    model = LitT5()
+    model = LitT5(model_name_or_path=hparams.model_name)
 
     # Create checkpoint callback
     checkpoint_callback = ModelCheckpoint(
@@ -50,9 +56,11 @@ def main(hparams):
         dirpath='checkpoints/',
         # No f string formating yet
         filename='esnli-{epoch:02d}-{val/loss:.2f}',
-        every_n_train_steps=1000,
+        every_n_train_steps=hparams.val_check_interval,
     )
-    log_generated_text_callback = LogGeneratedTextCallback(n_samples=10)
+    log_generated_text_callback = LogGeneratedTextCallback(
+        n_samples=hparams.n_text_samples,
+        log_every_n_steps=hparams.log_every_n_generated)
 
     callbacks = [checkpoint_callback, log_generated_text_callback]
 
@@ -63,12 +71,12 @@ def main(hparams):
     trainer = Trainer(
         accelerator='auto',
         devices='auto',
-        max_epochs=3,
+        max_epochs=hparams.max_epochs,
         logger=wandb_logger,
-        log_every_n_steps=50,
+        log_every_n_steps=hparams.log_every_n_steps,
         # Do validation every 50 steps
-        val_check_interval=10,
-        limit_val_batches=8,
+        val_check_interval=hparams.val_check_interval,
+        limit_val_batches=hparams.limit_val_batches,
         callbacks=callbacks,
     )
 
@@ -80,4 +88,5 @@ def main(hparams):
 
 
 if __name__ == "__main__":
-    main(hparams=None)
+    hparams = get_args()
+    main(hparams)
