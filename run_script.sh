@@ -1,4 +1,3 @@
-
 #!/usr/bin/env bash
 #SBATCH --time=10:00:00
 #SBATCH --partition=gpu
