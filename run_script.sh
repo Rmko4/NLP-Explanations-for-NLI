@@ -30,5 +30,5 @@ python3 train_t5.py \
 --log_every_n_steps 50 \
 --val_check_interval 1000 \
 --limit_val_batches 50 \
---n_samples 10 \
+--n_text_samples 10 \
 --log_every_n_generated 20
