@@ -28,6 +28,7 @@ class LitT5(LightningModule):
         self.metric = dummy_metric
         self.generation_config = GenerationConfig.from_pretrained(
             model_name_or_path)
+        self.generation_config.max_new_tokens = 128
         self.tokenizer: T5Tokenizer = T5Tokenizer.from_pretrained(
             model_name_or_path)
 

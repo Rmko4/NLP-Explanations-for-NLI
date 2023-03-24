@@ -39,7 +39,7 @@ def main(hparams):
 
     # Create data module
     data_module = ESNLIDataModule(
-        train_batch_size=64, eval_batch_size=4, dataset_path=data_path)
+        train_batch_size=8, eval_batch_size=8, dataset_path=data_path)
 
     # Create model
     model = LitT5()
@@ -67,16 +67,16 @@ def main(hparams):
         logger=wandb_logger,
         log_every_n_steps=50,
         # Do validation every 50 steps
-        val_check_interval=200,
-        limit_val_batches=20,
+        val_check_interval=10,
+        limit_val_batches=8,
         callbacks=callbacks,
     )
 
     # Validate
-    trainer.validate(model, data_module)
+    # trainer.validate(model, data_module)
 
     # Train
-    # trainer.fit(model, data_module)
+    trainer.fit(model, data_module)
 
 
 if __name__ == "__main__":

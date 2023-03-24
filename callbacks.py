@@ -23,7 +23,6 @@ class LogGeneratedTextCallback(Callback):
         """Called when the validation batch ends."""
 
         # `outputs` comes from `LightningModule.validation_step`
-
         if batch_idx == 0:
 
             # Create a dictionary with the required data
