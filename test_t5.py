@@ -60,11 +60,13 @@ def main(hparams):
     )
 
     # Test model
-    # trainer.test(model, datamodule=data_module)
-    out = trainer.predict(model, datamodule=data_module)
-    input_texts = out[0]['input_text']
-    generated_texts = out[0]['generated_text']
-    reference_texts = out[0]['reference_texts']
+    trainer.test(model, datamodule=data_module)
+
+    # Predict with model
+    # out = trainer.predict(model, datamodule=data_module)
+    # input_texts = out[0]['input_text']
+    # generated_texts = out[0]['generated_text']
+    # reference_texts = out[0]['reference_texts']
 
 if __name__ == "__main__":
     hparams = get_args()

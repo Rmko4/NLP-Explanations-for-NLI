@@ -28,7 +28,7 @@ class LitT5(LightningModule):
         self.tokenizer: T5Tokenizer = T5Tokenizer.from_pretrained(
             model_name_or_path)
 
-        self.blue_metric = textmetrics.BLEUScore()
+        self.bleu_metric = textmetrics.BLEUScore(n_gram=3)
         self.rouge_metric = textmetrics.ROUGEScore()
         self.perplexity_metric = textmetrics.Perplexity(ignore_index=-100)
         self.bert_metric = textmetrics.BERTScore()
@@ -76,11 +76,7 @@ class LitT5(LightningModule):
             batch[f'explanation_{i}'], skip_special_tokens=True) for i in range(1, 4)]
 
         # Update suffices as we are only interested in epoch score
-        self.blue_metric.update(generated_text, reference_texts)
-
-        # for i in range(3):
-        #     self.rouge_metric.update(
-        #         generated_text, reference_texts[i])
+        self.bleu_metric.update(generated_text, reference_texts)
 
         # This is only for validation on rightshifted explanation_1
         outputs: Seq2SeqLMOutput = self.model(
@@ -92,7 +88,7 @@ class LitT5(LightningModule):
         self.perplexity_metric.update(outputs.logits, batch['labels'])
 
         self.log_dict({'val/loss': val_loss,
-                       'val/blue': self.blue_metric,
+                       'val/blue': self.bleu_metric,
                        'val/perplexity': self.perplexity_metric,
                        }, prog_bar=True)
         # self.log_dict(self.rouge_metric, prog_bar=True)
@@ -149,7 +145,7 @@ class LitT5(LightningModule):
         reference_texts = output['reference_texts']
         
         # Update suffices as we are only interested in epoch score
-        self.blue_metric.update(generated_text, reference_texts)
+        self.bleu_metric.update(generated_text, reference_texts)
         for i in range(3):
             self.bert_metric.update(generated_text, reference_texts[i])
             self.rouge_metric.update(generated_text, reference_texts[i])
@@ -158,9 +154,9 @@ class LitT5(LightningModule):
 
     def test_epoch_end(self, outputs):
         # Log test blue score
-        blue_score = self.blue_metric.compute()
+        blue_score = self.bleu_metric.compute()
         self.log('test/blue', blue_score)
-        self.blue_metric.reset()
+        self.bleu_metric.reset()
 
         # Log test bert score
         bert_score_dict = self.bert_metric.compute()
