@@ -1,9 +1,6 @@
 
 from datetime import datetime
-import os
 
-import pytorch_lightning as pl
-import wandb
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger
@@ -18,7 +15,8 @@ from parse_args_train import get_args
 # Run: wandb login
 
 # Added datetime to name to avoid conflicts
-run_name = "Fine-Tuning_" + datetime.now().strftime("%m%d-%H:%M:%S")
+time = datetime.now().strftime("%m%d-%H:%M:%S")
+run_name = "Testing_" + time
 # data_path = "~/datasets/esnli/"
 # data_path = os.path.expanduser(data_path)
 # model_name = "google/flan-t5-base"
@@ -30,7 +28,7 @@ def main(hparams):
         name=run_name,
         project="FLAN-T5-ESNLI",
         save_dir="logs/",
-        log_model="all"
+        log_model="all",
     )
 
     # To log additional params, outside lightning module hparams:
@@ -56,7 +54,7 @@ def main(hparams):
         monitor='val/loss',
         dirpath=hparams.checkpoint_path,
         # No f string formating yet
-        filename='esnli-{epoch:02d}-{val/loss:.2f}',
+        filename=time + 'esnli-{epoch:02d}-{step}-{val/loss:.2f}',
         every_n_train_steps=hparams.val_check_interval,
     )
     log_generated_text_callback = LogGeneratedTextCallback(
