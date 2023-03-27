@@ -65,6 +65,9 @@ class ESNLIDataModule(LightningDataModule):
             batch_size=self.eval_batch_size,
             collate_fn=self.data_collator,
         )
+    
+    def predict_dataloader(self) -> DataLoader:
+        return self.test_dataloader()
 
     def _load_processed_dataset(self):
         # Note this function does not change state of self

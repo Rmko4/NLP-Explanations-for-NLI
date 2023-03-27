@@ -1,5 +1,5 @@
 import argparse
-
+from typing import Union
 
 def get_args():
     parser = argparse.ArgumentParser(description='T5 ESNLI Fine-Tuning')
@@ -25,6 +25,10 @@ def get_args():
                         help='The number of training steps between each validation run.')
     parser.add_argument('--limit_val_batches', type=int, default=50,
                         help='The number of batches to use for validation.')
+    parser.add_argument('--limit_test_batches', type=int, default=50,
+                        help='The number of batches to use for testing.')
+    parser.add_argument('--limit_predict_batches', type=int, default=50,
+                        help='The number of batches to use for prediction.')
     parser.add_argument('--n_text_samples', type=int, default=10,
                         help='The number of samples to generate for each logging interval.')
     parser.add_argument('--log_every_n_generated', type=int, default=20,

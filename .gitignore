@@ -131,3 +131,4 @@ dmypy.json
 logs/**
 lightning_logs/**
 data/**
+local_scripts/**

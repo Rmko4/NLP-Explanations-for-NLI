@@ -8,10 +8,7 @@ from transformers.modeling_outputs import Seq2SeqLMOutput
 from torchmetrics.text.bert import BERTScore
 # Import Bertscore, bleuscore and rougescore
 import torchmetrics.text as textmetrics
-
-
-def dummy_metric(pred, gt):
-    return {'eehh wadde': 1}
+from typing import Union, List
 
 
 class LitT5(LightningModule):
@@ -25,7 +22,6 @@ class LitT5(LightningModule):
         super().__init__()
         self.model = T5ForConditionalGeneration.from_pretrained(
             model_name_or_path)
-        self.metric = dummy_metric
         self.generation_config = GenerationConfig.from_pretrained(
             model_name_or_path)
         self.generation_config.max_new_tokens = 128
@@ -35,7 +31,7 @@ class LitT5(LightningModule):
         self.blue_metric = textmetrics.BLEUScore()
         self.rouge_metric = textmetrics.ROUGEScore()
         self.perplexity_metric = textmetrics.Perplexity(ignore_index=-100)
-        # self.bert_metric = textmetrics.BERTScore()
+        self.bert_metric = textmetrics.BERTScore()
 
         self.train_loss_history = []
 
@@ -72,12 +68,12 @@ class LitT5(LightningModule):
         generated_out = self.model.generate(
             batch['input_ids'], self.generation_config)
 
+        input_text = self.tokenizer.batch_decode(
+            batch['input_ids'], skip_special_tokens=True)
         generated_text = self.tokenizer.batch_decode(
             generated_out, skip_special_tokens=True)
         reference_texts = [self.tokenizer.batch_decode(
             batch[f'explanation_{i}'], skip_special_tokens=True) for i in range(1, 4)]
-        input_text = self.tokenizer.batch_decode(
-            batch['input_ids'], skip_special_tokens=True)
 
         # Update suffices as we are only interested in epoch score
         self.blue_metric.update(generated_text, reference_texts)
@@ -115,6 +111,80 @@ class LitT5(LightningModule):
             weight_decay=self.hparams.weight_decay
         )
         return optimizer
+
+    def generate_text(self, input_text: Union[str, List[str]], max_length: int = 128, **generate_kwargs) -> Union[str, List[str]]:
+        # Convert input_text to list if it is a string
+        if isinstance(input_text, str):
+            input_text = [input_text]
+
+        # Encode input_text using the tokenizer
+        input_ids = self.tokenizer.batch_encode_plus(
+            input_text, return_tensors='pt', padding=True)['input_ids'].to(self.device)
+
+        # Generate output texts using the model
+        generated_ids = self.model.generate(
+            input_ids=input_ids,
+            max_length=max_length,
+            generation_config=self.generation_config,
+            **generate_kwargs
+        )
+
+        # Decode the generated output texts using the tokenizer
+        generated_text = self.tokenizer.batch_decode(
+            generated_ids, skip_special_tokens=True)
+
+        # Return the generated output text as a list or string based on the input format
+        if len(generated_text) == 1:
+            return generated_text[0]
+        else:
+            return generated_text
+
+    def predict_step(self, batch, batch_idx, dataloader_idx=0):
+        output = self._batch_generate(batch)
+        return output
+
+    def test_step(self, batch, batch_idx, dataloader_idx=0):
+        output = self._batch_generate(batch)
+        generated_text = output['generated_text']
+        reference_texts = output['reference_texts']
+        
+        # Update suffices as we are only interested in epoch score
+        self.blue_metric.update(generated_text, reference_texts)
+        for i in range(3):
+            self.bert_metric.update(generated_text, reference_texts[i])
+            self.rouge_metric.update(generated_text, reference_texts[i])
+
+        return output
+
+    def test_epoch_end(self, outputs):
+        # Log test blue score
+        blue_score = self.blue_metric.compute()
+        self.log('test/blue', blue_score)
+        self.blue_metric.reset()
+
+        # Log test bert score
+        bert_score_dict = self.bert_metric.compute()
+        bert_score = {k: sum(v) / len(v) for k, v in bert_score_dict.items()}
+        self.log('test/bert', bert_score)
+        self.bert_metric.reset()
+
+        # Log test rouge score
+        rouge_score = self.rouge_metric.compute()
+        self.log('test/rouge', rouge_score)
+        self.rouge_metric.reset()
+
+
+    def _batch_generate(self, batch):
+        generated_out = self.model.generate(
+            batch['input_ids'], self.generation_config)
+
+        generated_text = self.tokenizer.batch_decode(
+            generated_out, skip_special_tokens=True)
+        reference_texts = [self.tokenizer.batch_decode(
+            batch[f'explanation_{i}'], skip_special_tokens=True) for i in range(1, 4)]
+        input_text = self.tokenizer.batch_decode(
+            batch['input_ids'], skip_special_tokens=True)
+        return {'input_text': input_text, 'generated_text': generated_text, 'reference_texts': reference_texts}
 
 
 if __name__ == "__main__":

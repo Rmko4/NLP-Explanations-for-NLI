@@ -11,6 +11,20 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": false
+        },
+        {
+            "name": "Python: test model",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/test_t5.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": ["--model_name", "google/flan-t5-base",
+            "--checkpoint_path", "~/models/loss=1.20.ckpt",
+            "--data_path", "~/datasets/esnli",
+            "--eval_batch_size", "8",
+            "--limit_test_batches", "2",
+            "--limit_predict_batches", "2"]
         }
     ]
 }
