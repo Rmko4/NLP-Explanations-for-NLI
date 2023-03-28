@@ -29,10 +29,12 @@ def main(hparams):
     )
 
     hparams.data_path = os.path.expanduser(hparams.data_path)
-    hparams.checkpoint_load_path = os.path.expanduser(
-        hparams.checkpoint_load_path)
-    hparams.checkpoint_save_path = os.path.expanduser(
-        hparams.checkpoint_save_path)
+    if hparams.checkpoint_load_path:
+        hparams.checkpoint_load_path = os.path.expanduser(
+            hparams.checkpoint_load_path)
+    if hparams.checkpoint_save_path:
+        hparams.checkpoint_save_path = os.path.expanduser(
+            hparams.checkpoint_save_path)
 
     # Create data module
     data_module = ESNLIDataModule(
@@ -57,7 +59,7 @@ def main(hparams):
         monitor='val/loss',
         dirpath=hparams.checkpoint_save_path,
         # No f string formating yet
-        filename=time + 'esnli-{epoch:02d}-{step}-{val/loss:.2f}',
+        filename=time + 'esnli-{epoch:02d}-{val/loss:.2f}',
         every_n_train_steps=hparams.val_check_interval,
     )
     log_generated_text_callback = LogGeneratedTextCallback(

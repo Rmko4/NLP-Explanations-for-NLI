@@ -37,7 +37,7 @@ python3 train_t5.py \
 --val_check_interval 1000 \
 --limit_val_batches 25 \
 --n_text_samples 10 \
---log_every_n_generated 49 \ 
+--log_every_n_generated 49 \
 --lora_r 16 \
 --lora_alpha 64 \
 --lora_dropout 0.2
