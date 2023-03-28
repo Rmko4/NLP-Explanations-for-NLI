@@ -55,7 +55,7 @@ def main(hparams):
     # Create checkpoint callback
     checkpoint_callback = ModelCheckpoint(
         monitor='val/loss',
-        dirpath=hparams.checkpoint_path,
+        dirpath=hparams.checkpoint_save_path,
         # No f string formating yet
         filename=time + 'esnli-{epoch:02d}-{step}-{val/loss:.2f}',
         every_n_train_steps=hparams.val_check_interval,

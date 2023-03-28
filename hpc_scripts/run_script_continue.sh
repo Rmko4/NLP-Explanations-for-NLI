@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#SBATCH --time=10:00:00
+#SBATCH --time=20:00:00
 #SBATCH --partition=gpu
 #SBATCH --gres=gpu:v100:1
 #SBATCH --job-name=ESNLI
