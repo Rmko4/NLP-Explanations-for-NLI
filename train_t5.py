@@ -18,6 +18,7 @@ from t5_lit_module import LitT5
 time = datetime.now().strftime("%m%d-%H:%M:%S")
 run_name = "Fine-Tuning_" + time
 
+
 def main(hparams):
     # Create wandb logger
     wandb_logger = WandbLogger(
@@ -29,6 +30,13 @@ def main(hparams):
 
     hparams.data_path = os.path.expanduser(hparams.data_path)
     hparams.checkpoint_path = os.path.expanduser(hparams.checkpoint_path)
+
+    if hparams.continue_from_checkpoint:
+        data_module = ESNLIDataModule()
+        model = LitT5().load_from_checkpoint(hparams.checkpoint_path)
+        trainer = Trainer()
+        trainer.fit(model, data_module, ckpt_path=hparams.checkpoint_path)
+        return
 
     # Create data module
     data_module = ESNLIDataModule(

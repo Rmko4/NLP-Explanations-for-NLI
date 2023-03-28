@@ -9,6 +9,8 @@ def get_args():
                         help='The name or path of the pre-trained T5 model to fine-tune.')
     parser.add_argument('--data_path', type=str, default='~/datasets/esnli/',
                         help='The path to the ESNLI dataset.')
+    parser.add_argument('--continue_from_checkpoint', action='store_true',
+                        help='Whether to continue training from a checkpoint. If True, the checkpoint path must be specified.')
     parser.add_argument('--checkpoint_path', type=str, default='~/models/',
                         help='The path to the directory where checkpoints will be saved.')
     parser.add_argument('--fine_tune_mode', type=str, default='full',
