@@ -37,6 +37,9 @@ def get_args():
                         help='The number of samples to generate for each logging interval.')
     parser.add_argument('--log_every_n_generated', type=int, default=20,
                         help='The number of training steps between each logging of generated samples.')
+    parser.add_argument('--lora_r', type=int, default=8, help='LORA R value')
+    parser.add_argument('--lora_alpha', type=int, default=32, help='LORA alpha value')
+    parser.add_argument('--lora_dropout', type=float, default=0.1, help='LORA dropout value')
 
     args = parser.parse_args()
     return args

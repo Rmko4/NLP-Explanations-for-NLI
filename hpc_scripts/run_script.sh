@@ -26,9 +26,9 @@ cd $TMPDIR/NLP-Explanations-for-NLI/
 
 python3 train_t5.py \
 --model_name google/flan-t5-base \
---data_path $TMPDIR/datasets/esnli \
+--data_path /data/$USER/datasets/esnli \
 --checkpoint_save_path /data/$USER/checkpoints/ \
---fine_tune_mode full \
+--fine_tune_mode lora \
 --learning_rate 1e-4 \
 --train_batch_size 32 \
 --eval_batch_size 32 \
@@ -37,4 +37,7 @@ python3 train_t5.py \
 --val_check_interval 1000 \
 --limit_val_batches 25 \
 --n_text_samples 10 \
---log_every_n_generated 49
+--log_every_n_generated 49 \ 
+--lora_r 16 \
+--lora_alpha 64 \
+--lora_dropout 0.2
