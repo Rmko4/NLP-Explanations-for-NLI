@@ -2,15 +2,17 @@ import argparse
 from typing import Union
 
 def get_args():
-    parser = argparse.ArgumentParser(description='T5 ESNLI Fine-Tuning')
+    parser = argparse.ArgumentParser(description='T5 ESNLI Fine-Tuning and Testing')
 
     # Add arguments here
     parser.add_argument('--model_name', type=str, default='google/flan-t5-base',
                         help='The name or path of the pre-trained T5 model to fine-tune.')
     parser.add_argument('--data_path', type=str, default='~/datasets/esnli/',
                         help='The path to the ESNLI dataset.')
-    parser.add_argument('--checkpoint_path', type=str, default='checkpoints/',
+    parser.add_argument('--checkpoint_path', type=str, default='~/models/',
                         help='The path to the directory where checkpoints will be saved.')
+    parser.add_argument('--fine_tune_mode', type=str, default='full',
+                        help='The mode to use for fine-tuning. Can be one of "full", "lora", or "gradual_unfreezing".')
     parser.add_argument('--learning_rate', type=float, default=1e-4,
                         help='The learning rate to use for training.')
     parser.add_argument('--train_batch_size', type=int, default=8,

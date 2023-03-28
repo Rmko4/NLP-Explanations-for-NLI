@@ -1,26 +1,22 @@
 
+import os
 from datetime import datetime
 
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger
 
-from esnli_data import ESNLIDataModule
-from t5_lit_module import LitT5
 from callbacks import LogGeneratedTextCallback
-from parse_args_train import get_args
-
+from esnli_data import ESNLIDataModule
+from parse_args_T5_run import get_args
+from t5_lit_module import LitT5
 
 # Make sure to login to wandb before running this script
 # Run: wandb login
 
 # Added datetime to name to avoid conflicts
 time = datetime.now().strftime("%m%d-%H:%M:%S")
-run_name = "Testing_" + time
-# data_path = "~/datasets/esnli/"
-# data_path = os.path.expanduser(data_path)
-# model_name = "google/flan-t5-base"
-
+run_name = "Fine-Tuning_" + time
 
 def main(hparams):
     # Create wandb logger
@@ -31,11 +27,8 @@ def main(hparams):
         log_model="all",
     )
 
-    # To log additional params, outside lightning module hparams:
-    # add one parameter
-    # wandb_logger.experiment.config["key"] = value
-    # add multiple parameters
-    # wandb_logger.experiment.config.update({key1: val1, key2: val2})
+    hparams.data_path = os.path.expanduser(hparams.data_path)
+    hparams.checkpoint_path = os.path.expanduser(hparams.checkpoint_path)
 
     # Create data module
     data_module = ESNLIDataModule(
@@ -47,6 +40,7 @@ def main(hparams):
 
     # Create model
     model = LitT5(model_name_or_path=hparams.model_name,
+                  fine_tune_mode=hparams.fine_tune_mode,
                   learning_rate=hparams.learning_rate)
 
     # Create checkpoint callback

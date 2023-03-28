@@ -25,6 +25,20 @@
             "--eval_batch_size", "8",
             "--limit_test_batches", "2",
             "--limit_predict_batches", "2"]
-        }
+        },
+        {
+            "name": "Python: train model",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/train_t5.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": ["--model_name", "google/flan-t5-small",
+            "--fine_tune_mode", "lora",
+            "--data_path", "~/datasets/esnli",
+            "--eval_batch_size", "8",
+            "--limit_test_batches", "2",
+            "--limit_predict_batches", "2"]
+        },
     ]
 }

@@ -3,13 +3,11 @@ from datetime import datetime
 import os
 
 from pytorch_lightning import Trainer
-from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger
 
 from esnli_data import ESNLIDataModule
 from t5_lit_module import LitT5
-from callbacks import LogGeneratedTextCallback
-from parse_args_train import get_args
+from parse_args_T5_run import get_args
 
 
 # Make sure to login to wandb before running this script
@@ -28,12 +26,6 @@ def main(hparams):
         save_dir="logs/",
         log_model="all"
     )
-
-    # To log additional params, outside lightning module hparams:
-    # add one parameter
-    # wandb_logger.experiment.config["key"] = value
-    # add multiple parameters
-    # wandb_logger.experiment.config.update({key1: val1, key2: val2})
 
     hparams.data_path = os.path.expanduser(hparams.data_path)
     hparams.checkpoint_path = os.path.expanduser(hparams.checkpoint_path)

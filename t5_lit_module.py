@@ -1,27 +1,49 @@
+from enum import Enum
+from typing import List, Union
+
 import numpy as np
 import torch
-import wandb
-from pytorch_lightning import LightningModule
-from torch.optim import AdamW
-from transformers import T5ForConditionalGeneration, GenerationConfig, T5Tokenizer
-from transformers.modeling_outputs import Seq2SeqLMOutput
-from torchmetrics.text.bert import BERTScore
 # Import Bertscore, bleuscore and rougescore
 import torchmetrics.text as textmetrics
-from typing import Union, List
+import wandb
+from peft import LoraConfig, TaskType, get_peft_model, PeftModelForSeq2SeqLM
+from pytorch_lightning import LightningModule
+from torch.optim import AdamW
+from transformers import (GenerationConfig, T5ForConditionalGeneration,
+                          T5Tokenizer)
+from transformers.modeling_outputs import Seq2SeqLMOutput
+
+
+class FineTuneMode(str, Enum):
+    FULL = 'full'
+    LORA = 'lora'
+    GRADUAL_UNFREEZING = 'gradual_unfreezing'
+
+
+def get_ignore_params(fine_tune_mode: FineTuneMode):
+    ignore_params = []
+    if fine_tune_mode != FineTuneMode.LORA:
+        ignore_params.extend(['lora_r', 'lora_alpha', 'lora_dropout'])
+    return ignore_params
 
 
 class LitT5(LightningModule):
     def __init__(
         self,
         model_name_or_path: str = "google/flan-t5-small",
+        fine_tune_mode: Union[str, FineTuneMode] = FineTuneMode.FULL,
         learning_rate: float = 1e-4,
         weight_decay: float = 0.0,
+        lora_r: int = 16,
+        lora_alpha: int = 32,
+        lora_dropout: float = 0.1,
         **kwargs,
     ):
         super().__init__()
-        self.model = T5ForConditionalGeneration.from_pretrained(
-            model_name_or_path)
+        # Does frame inspection so find init args
+        self.save_hyperparameters(ignore=get_ignore_params(fine_tune_mode))
+
+        self._load_model()
         self.generation_config = GenerationConfig.from_pretrained(
             model_name_or_path)
         self.generation_config.max_new_tokens = 128
@@ -35,8 +57,18 @@ class LitT5(LightningModule):
 
         self.train_loss_history = []
 
-        # Does frame inspection so find init args
-        self.save_hyperparameters()
+    def _load_model(self):
+        hp = self.hparams
+        self.model = T5ForConditionalGeneration.from_pretrained(
+            hp.model_name_or_path)
+        if hp.fine_tune_mode == FineTuneMode.LORA:
+            self.peft_config = LoraConfig(
+                task_type=TaskType.SEQ_2_SEQ_LM,
+                r=hp.lora_r,
+                lora_alpha=hp.lora_alpha,
+                lora_dropout=hp.lora_dropout)
+            self.model: PeftModelForSeq2SeqLM = get_peft_model(
+                self.model, self.peft_config)
 
     def forward(self, **inputs):
         return self.model(**inputs)
@@ -66,7 +98,7 @@ class LitT5(LightningModule):
 
     def validation_step(self, batch, batch_idx, dataloader_idx=0):
         generated_out = self.model.generate(
-            batch['input_ids'], self.generation_config)
+            inputs=batch['input_ids'], generation_config=self.generation_config)
 
         input_text = self.tokenizer.batch_decode(
             batch['input_ids'], skip_special_tokens=True)
@@ -143,7 +175,7 @@ class LitT5(LightningModule):
         output = self._batch_generate(batch)
         generated_text = output['generated_text']
         reference_texts = output['reference_texts']
-        
+
         # Update suffices as we are only interested in epoch score
         self.bleu_metric.update(generated_text, reference_texts)
         for i in range(3):
@@ -169,10 +201,9 @@ class LitT5(LightningModule):
         self.log('test/rouge', rouge_score)
         self.rouge_metric.reset()
 
-
     def _batch_generate(self, batch):
         generated_out = self.model.generate(
-            batch['input_ids'], self.generation_config)
+            inputs=batch['input_ids'], generation_config=self.generation_config)
 
         generated_text = self.tokenizer.batch_decode(
             generated_out, skip_special_tokens=True)

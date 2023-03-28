@@ -24,6 +24,7 @@ python3 train_t5.py \
 --model_name google/flan-t5-base \
 --data_path $TMPDIR/datasets/esnli \
 --checkpoint_path /data/$USER/checkpoints/ \
+--fine_tune_mode lora \
 --learning_rate 1e-4 \
 --train_batch_size 32 \
 --eval_batch_size 32 \
