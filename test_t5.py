@@ -28,7 +28,7 @@ def main(hparams):
     )
 
     hparams.data_path = os.path.expanduser(hparams.data_path)
-    hparams.checkpoint_path = os.path.expanduser(hparams.checkpoint_path)
+    hparams.checkpoint_load_path = os.path.expanduser(hparams.checkpoint_load_path)
 
     # Create data module
     data_module = ESNLIDataModule(
@@ -39,7 +39,7 @@ def main(hparams):
 
     # Load model from checkpoint
     model = LitT5.load_from_checkpoint(
-        checkpoint_path=hparams.checkpoint_path,
+        checkpoint_load_path=hparams.checkpoint_load_path,
     )
 
     # Create trainer

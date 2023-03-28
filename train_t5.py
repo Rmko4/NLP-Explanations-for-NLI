@@ -29,14 +29,10 @@ def main(hparams):
     )
 
     hparams.data_path = os.path.expanduser(hparams.data_path)
-    hparams.checkpoint_path = os.path.expanduser(hparams.checkpoint_path)
-
-    if hparams.continue_from_checkpoint:
-        data_module = ESNLIDataModule()
-        model = LitT5().load_from_checkpoint(hparams.checkpoint_path)
-        trainer = Trainer()
-        trainer.fit(model, data_module, ckpt_path=hparams.checkpoint_path)
-        return
+    hparams.checkpoint_load_path = os.path.expanduser(
+        hparams.checkpoint_load_path)
+    hparams.checkpoint_save_path = os.path.expanduser(
+        hparams.checkpoint_save_path)
 
     # Create data module
     data_module = ESNLIDataModule(
@@ -47,9 +43,14 @@ def main(hparams):
     )
 
     # Create model
-    model = LitT5(model_name_or_path=hparams.model_name,
-                  fine_tune_mode=hparams.fine_tune_mode,
-                  learning_rate=hparams.learning_rate)
+    if hparams.checkpoint_load_path:
+        model = LitT5.load_from_checkpoint(
+            checkpoint_load_path=hparams.checkpoint_load_path,
+        )
+    else:
+        model = LitT5(model_name_or_path=hparams.model_name,
+                      fine_tune_mode=hparams.fine_tune_mode,
+                      learning_rate=hparams.learning_rate)
 
     # Create checkpoint callback
     checkpoint_callback = ModelCheckpoint(
@@ -85,7 +86,7 @@ def main(hparams):
     # trainer.validate(model, data_module)
 
     # Train
-    trainer.fit(model, data_module)
+    trainer.fit(model, data_module, ckpt_path=hparams.checkpoint_load_path)
 
 
 if __name__ == "__main__":
