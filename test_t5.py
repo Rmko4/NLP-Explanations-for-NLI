@@ -39,7 +39,7 @@ def main(hparams):
 
     # Load model from checkpoint
     model = LitT5.load_from_checkpoint(
-        checkpoint_load_path=hparams.checkpoint_load_path,
+        checkpoint_path=hparams.checkpoint_load_path,
     )
 
     # Create trainer

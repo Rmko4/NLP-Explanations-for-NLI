@@ -45,7 +45,7 @@ def main(hparams):
     # Create model
     if hparams.checkpoint_load_path:
         model = LitT5.load_from_checkpoint(
-            checkpoint_load_path=hparams.checkpoint_load_path,
+            checkpoint_path=hparams.checkpoint_load_path,
         )
     else:
         model = LitT5(model_name_or_path=hparams.model_name,

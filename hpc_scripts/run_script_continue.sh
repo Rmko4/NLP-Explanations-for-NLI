@@ -25,7 +25,6 @@ source /data/$USER/.envs/nlpenv/bin/activate
 cd $TMPDIR/NLP-Explanations-for-NLI/
 
 python3 train_t5.py \
---continue_from_checkpoint \
 --checkpoint_load_path /data/$USER/checkpoints/esnli-epoch=00-val/loss=1.20.ckpt
 --model_name google/flan-t5-base \
 --data_path /data/$USER/datasets/esnli \
