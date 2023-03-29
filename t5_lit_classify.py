@@ -1,18 +1,33 @@
+# %%
 import numpy as np
 import torch
 import wandb
 from pytorch_lightning import LightningModule
 from torch.optim import AdamW
-from transformers import T5ForConditionalGeneration, GenerationConfig, T5Tokenizer, T5Model, T5EncoderModel
+from transformers import T5ForConditionalGeneration, GenerationConfig, T5Tokenizer, T5EncoderModel, T5EncoderModel
 from transformers.modeling_outputs import Seq2SeqLMOutput
 from torchmetrics.text.bert import BERTScore
 # Import Bertscore, bleuscore and rougescore
 import torchmetrics.text as textmetrics
+from torchmetrics import Accuracy
 from torch import nn
 
+# %%
 
-def dummy_metric(pred, gt):
-    return {'eehh wadde': 1}
+from esnli_data import ESNLIDataModule
+
+data_module = ESNLIDataModule(classify=True)
+data_module.setup()
+
+# %%
+
+train_loader = data_module.train_dataloader()
+
+# %%
+data = next(iter(train_loader))
+data['input_ids'].shape, data['attention_mask'].shape, data['labels'].shape
+
+# %%
 
 
 class LitT5Classify(LightningModule):
@@ -28,41 +43,53 @@ class LitT5Classify(LightningModule):
         **kwargs,
     ):
         super().__init__()
-        self.encoder = T5Model.from_pretrained(
-            model_path)
-        self.tokenizer: T5Tokenizer = T5Tokenizer.from_pretrained(
-            tokenizer_path)
-        self.classification_head = self.get_classification_head(n_features,
-                                                                n_hidden,
-                                                                n_output)
+        self.tokenizer: T5Tokenizer = T5Tokenizer.from_pretrained(tokenizer_path)
+        self.encoder = T5EncoderModel.from_pretrained(model_path)
+        self._freeze_encoder()
 
+        self.lstm, self.classification_layer = self._get_classification_head(n_features,
+                                                                             n_hidden,
+                                                                             n_output)
         self.loss = nn.CrossEntropyLoss()
-
         self.train_loss_history = []
+
+        self.acc = Accuracy(task="multiclass", num_classes=n_output)
 
         # Does frame inspection so find init args
         self.save_hyperparameters()
 
-    def get_classification_head(self, n_features, n_hidden, n_output):
-        return nn.Sequential(nn.Linear(n_features, n_hidden),
-                             nn.ReLU(),
-                             nn.Linear(n_hidden, n_output),
-                             torch.nn.Softmax(dim=-1))
+    def _freeze_encoder(self):
+        for param in self.encoder.parameters():
+            param.requires_grad = False
+
+    def _get_classification_head(self, n_features, n_hidden, n_output):
+        lstm = nn.LSTM(input_size=512,
+                       hidden_size=n_hidden,
+                       num_layers=1,
+                       batch_first=True,
+                       bidirectional=True,
+                       dropout=0.5)
+        classification_layer = nn.Sequential(nn.Linear(2*n_hidden, n_output),
+                                             torch.nn.Softmax(dim=-1))
+        return lstm, classification_layer
 
     def forward(self, inputs):
         input_ids = inputs['input_ids']
-        decoder_input_ids = self.encoder._shift_right(input_ids)
-        outputs = self.encoder(input_ids=input_ids, decoder_input_ids=decoder_input_ids)
+        # Pass input through the encoder
+        outputs = self.encoder(input_ids)
         last_hidden_states = outputs.last_hidden_state
-        out = self.classification_head(last_hidden_states)
+        # Pass the hidden states of the encoder through the lstm
+        h_n, _ = self.lstm(last_hidden_states)
+        # Pass the last hidden state of the lstm through the classification layer
+        last_h_n = h_n[:, -1]
+        out = self.classification_layer(last_h_n)
         return out
 
     def training_step(self, batch, batch_idx):
         y = batch['labels']
-        out = self(**batch)
-        y_hat = torch.argmax(out, dim=-1)
+        out = self(batch)
 
-        loss = self.loss(y, y_hat)
+        loss = self.loss(y, out)
 
         self.log('train/loss_epoch', loss, on_step=False, on_epoch=True)
         self.log('train/loss_step', loss, on_step=True,
@@ -84,42 +111,18 @@ class LitT5Classify(LightningModule):
         return {"loss": loss}
 
     def validation_step(self, batch, batch_idx, dataloader_idx=0):
-        generated_out = self.model.generate(
-            batch['input_ids'], self.generation_config)
+        y = batch['labels']
+        out = self(batch)
 
-        generated_text = self.tokenizer.batch_decode(
-            generated_out, skip_special_tokens=True)
-        reference_texts = [self.tokenizer.batch_decode(
-            batch[f'explanation_{i}'], skip_special_tokens=True) for i in range(1, 4)]
-        input_text = self.tokenizer.batch_decode(
-            batch['input_ids'], skip_special_tokens=True)
+        val_loss = self.loss(y, out)
 
-        # Update suffices as we are only interested in epoch score
-        self.blue_metric.update(generated_text, reference_texts)
-
-        # for i in range(3):
-        #     self.rouge_metric.update(
-        #         generated_text, reference_texts[i])
-
-        # This is only for validation on rightshifted explanation_1
-        outputs: Seq2SeqLMOutput = self.model(
-            input_ids=batch['input_ids'],
-            attention_mask=batch['attention_mask'],
-            labels=batch['labels'])
-
-        val_loss = outputs.loss
-        self.perplexity_metric.update(outputs.logits, batch['labels'])
+        y_hat = torch.argmax(out, dim=-1)
+        self.acc.update(y, y_hat)
 
         self.log_dict({'val/loss': val_loss,
-                       'val/blue': self.blue_metric,
-                       'val/perplexity': self.perplexity_metric,
+                       'val/acc': self.acc,
                        }, prog_bar=True)
-        # self.log_dict(self.rouge_metric, prog_bar=True)
-        # self.log_dict(metric_dict, prog_bar=True)
-        return {'val_loss': val_loss,
-                'input_text': input_text,
-                'generated_text': generated_text,
-                'reference_texts': reference_texts}
+        return {'val_loss': val_loss, }
 
     def configure_optimizers(self):
         # Might also add lr_scheduler
@@ -132,5 +135,38 @@ class LitT5Classify(LightningModule):
         return optimizer
 
 
-if __name__ == "__main__":
-    model = LitT5('google/flan-t5-small')
+# %%
+
+model = LitT5Classify()
+
+# %%
+data = next(iter(train_loader))
+print(data['input_ids'].shape)
+out = model.forward(data)
+print(out.shape)
+# %%
+out
+# %%
+for param in model.encoder.parameters():
+    param.requires_grad = False
+    print(param)
+# %%
+print(model)
+
+# %%
+model.summarize()
+# %%
+model2 = LitT5Classify()
+# %%
+model2.summarize()
+# %%
+data = next(iter(train_loader))
+
+# %%
+# loss = nn.CrossEntropyLoss()
+input = torch.randn(3, 5, requires_grad=True)
+print(input.shape)
+target = torch.empty(3, dtype=torch.long).random_(5)
+print(target.shape)
+pass
+# %%
