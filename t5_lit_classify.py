@@ -3,7 +3,7 @@ import torch
 import wandb
 from pytorch_lightning import LightningModule
 from torch.optim import AdamW
-from transformers import T5ForConditionalGeneration, GenerationConfig, T5Tokenizer, T5Model
+from transformers import T5ForConditionalGeneration, GenerationConfig, T5Tokenizer, T5Model, T5EncoderModel
 from transformers.modeling_outputs import Seq2SeqLMOutput
 from torchmetrics.text.bert import BERTScore
 # Import Bertscore, bleuscore and rougescore
