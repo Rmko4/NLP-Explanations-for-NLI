@@ -7,6 +7,27 @@ from torchmetrics import Accuracy
 from torch import nn
 
 
+class ClassificationHead(nn.Module):
+    def __init__(self,
+                 n_features: int = 512,
+                 n_hidden: int = 256,
+                 n_output: int = 3,
+                 n_lstm_layers: int = 1,
+                 lstm_droput: float = 0.5, ):
+        super().__init__()
+        self.lstm = nn.LSTM(input_size=n_features,
+                            hidden_size=n_hidden,
+                            num_layers=n_lstm_layers,
+                            batch_first=True,
+                            bidirectional=True,
+                            dropout=lstm_droput)
+        self.classification_layer = nn.Sequential(nn.Linear(2*n_hidden, n_output),
+                                                  torch.nn.Softmax(dim=-1))
+
+    def forward(self, x):
+        pass
+
+
 class LitT5Classify(LightningModule):
     def __init__(
         self,
@@ -22,6 +43,7 @@ class LitT5Classify(LightningModule):
         **kwargs,
     ):
         super().__init__()
+        # self.model = None
         self.encoder = T5EncoderModel.from_pretrained(model_name_or_path)
         self._freeze_encoder()
 
@@ -54,6 +76,21 @@ class LitT5Classify(LightningModule):
         classification_layer = nn.Sequential(nn.Linear(2*n_hidden, n_output),
                                              torch.nn.Softmax(dim=-1))
         return lstm, classification_layer
+
+    # def _get_model(model_name_or_path, self, n_features, n_hidden, n_output, layers, dropout):
+    #     encoder = T5EncoderModel.from_pretrained(model_name_or_path)
+
+    #     for param in encoder.parameters():
+    #         param.requires_grad = False
+
+    #     lstm = nn.LSTM(input_size=n_features,
+    #                    hidden_size=n_hidden,
+    #                    num_layers=layers,
+    #                    batch_first=True,
+    #                    bidirectional=True,
+    #                    dropout=dropout)
+    #     classification_layer = nn.Sequential(nn.Linear(2*n_hidden, n_output),
+    #                                          torch.nn.Softmax(dim=-1))
 
     def forward(self, inputs):
         input_ids = inputs['input_ids']
@@ -115,3 +152,7 @@ class LitT5Classify(LightningModule):
             weight_decay=self.hparams.weight_decay
         )
         return optimizer
+
+
+# model = LitT5Classify()
+# print(model.parameters())
