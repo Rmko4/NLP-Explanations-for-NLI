@@ -1,55 +1,37 @@
 # %%
-import numpy as np
 import torch
-import wandb
 from pytorch_lightning import LightningModule
 from torch.optim import AdamW
-from transformers import T5ForConditionalGeneration, GenerationConfig, T5Tokenizer, T5EncoderModel, T5EncoderModel
-from transformers.modeling_outputs import Seq2SeqLMOutput
-from torchmetrics.text.bert import BERTScore
-# Import Bertscore, bleuscore and rougescore
-import torchmetrics.text as textmetrics
+from transformers import T5Tokenizer, T5EncoderModel
 from torchmetrics import Accuracy
 from torch import nn
-
-# %%
-
-from esnli_data import ESNLIDataModule
-
-data_module = ESNLIDataModule(classify=True)
-data_module.setup()
-
-# %%
-
-train_loader = data_module.train_dataloader()
-
-# %%
-data = next(iter(train_loader))
-data['input_ids'].shape, data['attention_mask'].shape, data['labels'].shape
-
-# %%
 
 
 class LitT5Classify(LightningModule):
     def __init__(
         self,
-        model_path: str = "google/flan-t5-small",
+        model_name_or_path: str = "google/flan-t5-small",
         tokenizer_path: str = "google/flan-t5-small",
         learning_rate: float = 1e-4,
         weight_decay: float = 0.0,
         n_features: int = 512,
         n_hidden: int = 256,
         n_output: int = 3,
+        n_lstm_layers: int = 1,
+        lstm_droput: float = 0.5,
         **kwargs,
     ):
         super().__init__()
-        self.tokenizer: T5Tokenizer = T5Tokenizer.from_pretrained(tokenizer_path)
-        self.encoder = T5EncoderModel.from_pretrained(model_path)
+        self.encoder = T5EncoderModel.from_pretrained(model_name_or_path)
         self._freeze_encoder()
+
+        self.tokenizer: T5Tokenizer = T5Tokenizer.from_pretrained(tokenizer_path)
 
         self.lstm, self.classification_layer = self._get_classification_head(n_features,
                                                                              n_hidden,
-                                                                             n_output)
+                                                                             n_output,
+                                                                             n_lstm_layers,
+                                                                             lstm_droput)
         self.loss = nn.CrossEntropyLoss()
         self.train_loss_history = []
 
@@ -62,13 +44,13 @@ class LitT5Classify(LightningModule):
         for param in self.encoder.parameters():
             param.requires_grad = False
 
-    def _get_classification_head(self, n_features, n_hidden, n_output):
-        lstm = nn.LSTM(input_size=512,
+    def _get_classification_head(self, n_features, n_hidden, n_output, layers, dropout):
+        lstm = nn.LSTM(input_size=n_features,
                        hidden_size=n_hidden,
-                       num_layers=1,
+                       num_layers=layers,
                        batch_first=True,
                        bidirectional=True,
-                       dropout=0.5)
+                       dropout=dropout)
         classification_layer = nn.Sequential(nn.Linear(2*n_hidden, n_output),
                                              torch.nn.Softmax(dim=-1))
         return lstm, classification_layer
@@ -86,7 +68,7 @@ class LitT5Classify(LightningModule):
         return out
 
     def training_step(self, batch, batch_idx):
-        y = batch['labels']
+        y = batch['int_labels']
         out = self(batch)
 
         loss = self.loss(y, out)
@@ -111,7 +93,7 @@ class LitT5Classify(LightningModule):
         return {"loss": loss}
 
     def validation_step(self, batch, batch_idx, dataloader_idx=0):
-        y = batch['labels']
+        y = batch['int_labels']
         out = self(batch)
 
         val_loss = self.loss(y, out)
@@ -133,40 +115,3 @@ class LitT5Classify(LightningModule):
             weight_decay=self.hparams.weight_decay
         )
         return optimizer
-
-
-# %%
-
-model = LitT5Classify()
-
-# %%
-data = next(iter(train_loader))
-print(data['input_ids'].shape)
-out = model.forward(data)
-print(out.shape)
-# %%
-out
-# %%
-for param in model.encoder.parameters():
-    param.requires_grad = False
-    print(param)
-# %%
-print(model)
-
-# %%
-model.summarize()
-# %%
-model2 = LitT5Classify()
-# %%
-model2.summarize()
-# %%
-data = next(iter(train_loader))
-
-# %%
-# loss = nn.CrossEntropyLoss()
-input = torch.randn(3, 5, requires_grad=True)
-print(input.shape)
-target = torch.empty(3, dtype=torch.long).random_(5)
-print(target.shape)
-pass
-# %%

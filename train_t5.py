@@ -10,6 +10,7 @@ from callbacks import LogGeneratedTextCallback
 from esnli_data import ESNLIDataModule
 from parse_args_T5_run import get_args
 from t5_lit_module import LitT5
+from t5_lit_classify import LitT5Classify
 
 # Make sure to login to wandb before running this script
 # Run: wandb login
@@ -42,6 +43,7 @@ def main(hparams):
         dataset_path=hparams.data_path,
         train_batch_size=hparams.train_batch_size,
         eval_batch_size=hparams.eval_batch_size,
+        classify=hparams.classify,
     )
 
     # Create model
@@ -49,10 +51,13 @@ def main(hparams):
         model = LitT5.load_from_checkpoint(
             checkpoint_path=hparams.checkpoint_load_path,
         )
-    else:
+    elif not hparams.classify:
         model = LitT5(model_name_or_path=hparams.model_name,
                       fine_tune_mode=hparams.fine_tune_mode,
                       learning_rate=hparams.learning_rate)
+    else:
+        model = LitT5Classify(model_name_or_path=hparams.model_name,
+                              learning_rate=hparams.learning_rate,)
 
     # Create checkpoint callback
     checkpoint_callback = ModelCheckpoint(

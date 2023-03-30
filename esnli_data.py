@@ -118,8 +118,7 @@ class ESNLIDataModule(LightningDataModule):
 
         # If we request the int labels for the classification task
         if self.classify:
-            test = examples["label"]
-            model_inputs["labels"] = examples["label"]
+            model_inputs["int_labels"] = examples["label"]
             return model_inputs
 
         # Tokenize first explanation and add as "labels" to model inputs
