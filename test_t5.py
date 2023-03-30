@@ -4,6 +4,10 @@ import os
 
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import WandbLogger
+from torchmetrics import CHRFScore
+from torchmetrics.text.rouge import ROUGEScore
+from torchmetrics.functional.text.bert import bert_score
+from statistics import mean 
 
 from esnli_data import ESNLIDataModule
 from t5_lit_module import LitT5
@@ -17,6 +21,28 @@ from parse_args_T5_run import get_args
 time = datetime.now().strftime("%m%d-%H:%M:%S")
 run_name = "Testing_" + time
 
+def evaluate(generated_texts, reference_texts):
+    # implement scores
+    chrf = CHRFScore()
+    rouge = ROUGEScore()
+
+    chrf_avg = 0 
+    rouge_avg = 0
+    bert_avg = 0
+
+    for target in reference_texts:
+        rouge_avg += rouge(generated_texts, target)["rouge1_fmeasure"]
+        chrf_avg += chrf(generated_texts, target)
+        bert_avg += mean(bert_score(generated_texts, target)["f1"])
+
+    rouge_avg /= len(reference_texts)
+    chrf_avg /= len(reference_texts)
+    bert_avg /= len(reference_texts)
+
+    # implement F1 for CHRF and ROUGE
+    f1 = 2 * (chrf_avg * rouge_avg) / (chrf_avg + rouge_avg)
+
+    print(f"chrf={chrf_avg:.2f}, rouge={rouge_avg:.2f}, F1={f1:.2f}, bert={bert_avg:.2f}")
 
 def main(hparams):
     # Create wandb logger
@@ -52,13 +78,16 @@ def main(hparams):
     )
 
     # Test model
-    trainer.test(model, datamodule=data_module)
+    #TODO: This does not work for me
+    # trainer.test(model, datamodule=data_module)
 
     # Predict with model
-    # out = trainer.predict(model, datamodule=data_module)
-    # input_texts = out[0]['input_text']
-    # generated_texts = out[0]['generated_text']
-    # reference_texts = out[0]['reference_texts']
+    out = trainer.predict(model, datamodule=data_module)
+    input_texts = out[0]['input_text']
+    generated_texts = out[0]['generated_text']
+    reference_texts = out[0]['reference_texts']
+
+    evaluate(generated_texts, reference_texts)
 
 if __name__ == "__main__":
     hparams = get_args()
