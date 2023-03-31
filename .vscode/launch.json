@@ -42,5 +42,15 @@
             "--limit_test_batches", "2",
             "--limit_predict_batches", "2"]
         },
+        {
+            "name": "Python: train model classify",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/train_t5.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": ["--model_name", "google/flan-t5-small",
+            "--classify", "True"]
+        },
     ]
 }
