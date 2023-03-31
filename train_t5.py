@@ -46,6 +46,9 @@ def main(hparams):
         classify=hparams.classify,
     )
 
+    data_module.setup()
+    data = next(iter(data_module.train_dataloader()))
+
     # Create model
     if hparams.checkpoint_load_path:
         model = LitT5.load_from_checkpoint(

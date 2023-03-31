@@ -1,31 +1,11 @@
-# %%
 import torch
 from pytorch_lightning import LightningModule
-from torch.optim import AdamW
-from transformers import T5Tokenizer, T5EncoderModel
-from torchmetrics import Accuracy
 from torch import nn
+from torch.optim import AdamW
+from torchmetrics import Accuracy
+from transformers import T5EncoderModel, T5Tokenizer
 
-
-class ClassificationHead(nn.Module):
-    def __init__(self,
-                 n_features: int = 512,
-                 n_hidden: int = 256,
-                 n_output: int = 3,
-                 n_lstm_layers: int = 1,
-                 lstm_droput: float = 0.5, ):
-        super().__init__()
-        self.lstm = nn.LSTM(input_size=n_features,
-                            hidden_size=n_hidden,
-                            num_layers=n_lstm_layers,
-                            batch_first=True,
-                            bidirectional=True,
-                            dropout=lstm_droput)
-        self.classification_layer = nn.Sequential(nn.Linear(2*n_hidden, n_output),
-                                                  torch.nn.Softmax(dim=-1))
-
-    def forward(self, x):
-        pass
+from classification_head import ClassificationHeadAttn
 
 
 class LitT5Classify(LightningModule):
@@ -35,25 +15,22 @@ class LitT5Classify(LightningModule):
         tokenizer_path: str = "google/flan-t5-small",
         learning_rate: float = 1e-4,
         weight_decay: float = 0.0,
-        n_features: int = 512,
+        embed_dim: int = 512,
         n_hidden: int = 256,
         n_output: int = 3,
-        n_lstm_layers: int = 1,
-        lstm_droput: float = 0.5,
+        m_h_attn_dropout: float = 0.2,
         **kwargs,
     ):
         super().__init__()
-        # self.model = None
         self.encoder = T5EncoderModel.from_pretrained(model_name_or_path)
         self._freeze_encoder()
+        self.classification_head = ClassificationHeadAttn(embed_dim,
+                                                          n_hidden,
+                                                          n_output,
+                                                          m_h_attn_dropout)
 
         self.tokenizer: T5Tokenizer = T5Tokenizer.from_pretrained(tokenizer_path)
 
-        self.lstm, self.classification_layer = self._get_classification_head(n_features,
-                                                                             n_hidden,
-                                                                             n_output,
-                                                                             n_lstm_layers,
-                                                                             lstm_droput)
         self.loss = nn.CrossEntropyLoss()
         self.train_loss_history = []
 
@@ -66,42 +43,14 @@ class LitT5Classify(LightningModule):
         for param in self.encoder.parameters():
             param.requires_grad = False
 
-    def _get_classification_head(self, n_features, n_hidden, n_output, layers, dropout):
-        lstm = nn.LSTM(input_size=n_features,
-                       hidden_size=n_hidden,
-                       num_layers=layers,
-                       batch_first=True,
-                       bidirectional=True,
-                       dropout=dropout)
-        classification_layer = nn.Sequential(nn.Linear(2*n_hidden, n_output),
-                                             torch.nn.Softmax(dim=-1))
-        return lstm, classification_layer
-
-    # def _get_model(model_name_or_path, self, n_features, n_hidden, n_output, layers, dropout):
-    #     encoder = T5EncoderModel.from_pretrained(model_name_or_path)
-
-    #     for param in encoder.parameters():
-    #         param.requires_grad = False
-
-    #     lstm = nn.LSTM(input_size=n_features,
-    #                    hidden_size=n_hidden,
-    #                    num_layers=layers,
-    #                    batch_first=True,
-    #                    bidirectional=True,
-    #                    dropout=dropout)
-    #     classification_layer = nn.Sequential(nn.Linear(2*n_hidden, n_output),
-    #                                          torch.nn.Softmax(dim=-1))
-
     def forward(self, inputs):
         input_ids = inputs['input_ids']
+        attn_mask = input['attention_mask']
         # Pass input through the encoder
         outputs = self.encoder(input_ids)
         last_hidden_states = outputs.last_hidden_state
-        # Pass the hidden states of the encoder through the lstm
-        h_n, _ = self.lstm(last_hidden_states)
-        # Pass the last hidden state of the lstm through the classification layer
-        last_h_n = h_n[:, -1]
-        out = self.classification_layer(last_h_n)
+        # Pass the hidden states through the classification head
+        out = self.classification_head(last_hidden_states, attn_mask)
         return out
 
     def training_step(self, batch, batch_idx):
@@ -147,12 +96,8 @@ class LitT5Classify(LightningModule):
         # Might also add lr_scheduler
         # https://lightning.ai/docs/pytorch/stable/common/lightning_module.html#configure-optimizers
         optimizer = AdamW(
-            self.model.parameters(),
+            self.classification_head.parameters(),
             lr=self.hparams.learning_rate,
             weight_decay=self.hparams.weight_decay
         )
         return optimizer
-
-
-# model = LitT5Classify()
-# print(model.parameters())
