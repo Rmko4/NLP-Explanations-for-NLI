@@ -51,7 +51,8 @@ class ClassificationHeadAttn(nn.Module):
 
     def forward(self, x, attn_mask):
         bool_attn_mask = self._preprocess_attn_mask(attn_mask)
-        attn_out, _ = self.m_h_attn(x, x, x, attn_mask=bool_attn_mask)
+        # attn_out, _ = self.m_h_attn(x, x, x, attn_mask=bool_attn_mask)
+        attn_out, _ = self.m_h_attn(x, x, x)
         # average over the sequence dimension
         avg_pool = torch.mean(attn_out, dim=1)
         x = self.l1(avg_pool)

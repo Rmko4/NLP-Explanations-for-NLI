@@ -12,10 +12,9 @@ class LitT5Classify(LightningModule):
     def __init__(
         self,
         model_name_or_path: str = "google/flan-t5-small",
-        tokenizer_path: str = "google/flan-t5-small",
         learning_rate: float = 1e-4,
         weight_decay: float = 0.0,
-        embed_dim: int = 512,
+        embed_dim: int = 768,
         n_hidden: int = 256,
         n_output: int = 3,
         m_h_attn_dropout: float = 0.2,
@@ -29,7 +28,7 @@ class LitT5Classify(LightningModule):
                                                           n_output,
                                                           m_h_attn_dropout)
 
-        self.tokenizer: T5Tokenizer = T5Tokenizer.from_pretrained(tokenizer_path)
+        self.tokenizer = T5Tokenizer.from_pretrained(model_name_or_path)
 
         self.loss = nn.CrossEntropyLoss()
         self.train_loss_history = []
@@ -45,7 +44,7 @@ class LitT5Classify(LightningModule):
 
     def forward(self, inputs):
         input_ids = inputs['input_ids']
-        attn_mask = input['attention_mask']
+        attn_mask = inputs['attention_mask']
         # Pass input through the encoder
         outputs = self.encoder(input_ids)
         last_hidden_states = outputs.last_hidden_state
@@ -57,7 +56,7 @@ class LitT5Classify(LightningModule):
         y = batch['int_labels']
         out = self(batch)
 
-        loss = self.loss(y, out)
+        loss = self.loss(out, y)
 
         self.log('train/loss_epoch', loss, on_step=False, on_epoch=True)
         self.log('train/loss_step', loss, on_step=True,
@@ -82,10 +81,10 @@ class LitT5Classify(LightningModule):
         y = batch['int_labels']
         out = self(batch)
 
-        val_loss = self.loss(y, out)
+        val_loss = self.loss(out, y)
 
         y_hat = torch.argmax(out, dim=-1)
-        self.acc.update(y, y_hat)
+        self.acc.update(y_hat, y)
 
         self.log_dict({'val/loss': val_loss,
                        'val/acc': self.acc,

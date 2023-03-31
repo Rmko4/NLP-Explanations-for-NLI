@@ -46,8 +46,8 @@ def main(hparams):
         classify=hparams.classify,
     )
 
-    data_module.setup()
-    data = next(iter(data_module.train_dataloader()))
+    # data_module.setup()
+    # data = next(iter(data_module.train_dataloader()))
 
     # Create model
     if hparams.checkpoint_load_path:
@@ -55,6 +55,7 @@ def main(hparams):
             checkpoint_path=hparams.checkpoint_load_path,
         )
     elif not hparams.classify:
+
         model = LitT5(model_name_or_path=hparams.model_name,
                       fine_tune_mode=hparams.fine_tune_mode,
                       learning_rate=hparams.learning_rate)
