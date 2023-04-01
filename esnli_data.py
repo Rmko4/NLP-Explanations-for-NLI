@@ -141,7 +141,6 @@ class ESNLIDataModule(LightningDataModule):
 
 if __name__ == "__main__":
     dm = ESNLIDataModule(classify=True)
-    # dm.prepare_data()
     dm.setup()
 
     # Prints the first batch of the training set

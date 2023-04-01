@@ -32,7 +32,7 @@ class ClassificationHeadAttn(nn.Module):
                  embed_dim: int = 512,
                  n_hidden: int = 256,
                  n_output: int = 3,
-                 m_h_att_dropout: float = 0.2, ):
+                 m_h_att_dropout: float = 0.2,):
         super().__init__()
         self.m_h_attn = nn.MultiheadAttention(embed_dim,
                                               num_heads=1,
@@ -41,31 +41,30 @@ class ClassificationHeadAttn(nn.Module):
         self.l1 = nn.Linear(embed_dim, n_hidden)
         self.ReLU = nn.ReLU()
         self.l_out = nn.Linear(n_hidden, n_output)
-        self.softmax = nn.Softmax(dim=-1)
 
     def _preprocess_attn_mask(self, attn_mask):
-        x = attn_mask.bool()
+        x = ~attn_mask.bool()
         x = torch.unsqueeze(x, dim=-1)
         x = x.repeat(1, 1, attn_mask.shape[-1])
         return x
 
     def forward(self, x, attn_mask):
         bool_attn_mask = self._preprocess_attn_mask(attn_mask)
-        # attn_out, _ = self.m_h_attn(x, x, x, attn_mask=bool_attn_mask)
-        attn_out, _ = self.m_h_attn(x, x, x)
+        attn_out, _ = self.m_h_attn(x, x, x, attn_mask=bool_attn_mask)
         # average over the sequence dimension
-        avg_pool = torch.mean(attn_out, dim=1)
+        avg_pool = torch.nanmean(attn_out, dim=1)
         x = self.l1(avg_pool)
         x = self.ReLU(x)
-        x = self.l_out(x)
-        out = self.softmax(x)
-        return out
+        logits = self.l_out(x)
+        return logits
 
 
 if __name__ == '__main__':
     from esnli_data import ESNLIDataModule
-    dm = ESNLIDataModule(classify=True)
-    # dm.prepare_data()
+    import os
+    dataset_path = os.path.expanduser('~/datasets/esnli_classify')
+
+    dm = ESNLIDataModule(classify=True, dataset_path=dataset_path)
     dm.setup()
 
     # Prints the first batch of the training set
@@ -74,4 +73,5 @@ if __name__ == '__main__':
 
     head = ClassificationHeadAttn()
     x = torch.randn(16, attn_mask.shape[1], 512)
-    head(x, attn_mask)
+    logits = head(x, attn_mask)
+    pass
