@@ -50,18 +50,19 @@ def main(hparams):
     # data = next(iter(data_module.train_dataloader()))
 
     # Create model
-    if hparams.checkpoint_load_path:
-        model = LitT5.load_from_checkpoint(
-            checkpoint_path=hparams.checkpoint_load_path,
-        )
-    elif not hparams.classify:
-
-        model = LitT5(model_name_or_path=hparams.model_name,
+    if not hparams.classify:
+        if hparams.checkpoint_load_path:
+            model = LitT5.load_from_checkpoint(
+                checkpoint_path=hparams.checkpoint_load_path,
+            )
+        else:
+            model = LitT5(model_name_or_path=hparams.model_name,
                       fine_tune_mode=hparams.fine_tune_mode,
                       learning_rate=hparams.learning_rate)
     else:
         model = LitT5Classify(model_name_or_path=hparams.model_name,
                               learning_rate=hparams.learning_rate,)
+
 
     # Create checkpoint callback
     checkpoint_callback = ModelCheckpoint(
@@ -71,11 +72,15 @@ def main(hparams):
         filename=time + 'esnli-{epoch:02d}-{val/loss:.2f}',
         every_n_train_steps=hparams.val_check_interval,
     )
-    log_generated_text_callback = LogGeneratedTextCallback(
-        n_samples=hparams.n_text_samples,
-        log_every_n_steps=hparams.log_every_n_generated)
 
-    callbacks = [checkpoint_callback, log_generated_text_callback]
+    callbacks = [checkpoint_callback]
+
+    if not hparams.classify:
+        log_generated_text_callback = LogGeneratedTextCallback(
+            n_samples=hparams.n_text_samples,
+            log_every_n_steps=hparams.log_every_n_generated)
+
+        callbacks.append(log_generated_text_callback)
 
     # Note that default behaviour does checkpointing for state of last training epoch
     # callbacks = None

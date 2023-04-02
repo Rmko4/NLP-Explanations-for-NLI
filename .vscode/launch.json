@@ -50,7 +50,8 @@
             "console": "integratedTerminal",
             "justMyCode": false,
             "args": ["--model_name", "google/flan-t5-small",
-            "--classify", "True"]
+            "--classify", "True",
+            "--data_path", "~/datasets/esnli_classify"]
         },
     ]
 }

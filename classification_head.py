@@ -42,14 +42,14 @@ class ClassificationHeadAttn(nn.Module):
         self.ReLU = nn.ReLU()
         self.l_out = nn.Linear(n_hidden, n_output)
 
-    def _preprocess_attn_mask(self, attn_mask):
-        x = ~attn_mask.bool()
+    def _preprocess_attention_mask(self, attention_mask):
+        x = ~attention_mask.bool()
         x = torch.unsqueeze(x, dim=-1)
-        x = x.repeat(1, 1, attn_mask.shape[-1])
+        x = x.repeat(1, 1, attention_mask.shape[-1])
         return x
 
-    def forward(self, x, attn_mask):
-        bool_attn_mask = self._preprocess_attn_mask(attn_mask)
+    def forward(self, x, attention_mask):
+        bool_attn_mask = self._preprocess_attention_mask(attention_mask)
         attn_out, _ = self.m_h_attn(x, x, x, attn_mask=bool_attn_mask)
         # average over the sequence dimension
         avg_pool = torch.nanmean(attn_out, dim=1)

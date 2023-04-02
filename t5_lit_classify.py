@@ -14,7 +14,6 @@ class LitT5Classify(LightningModule):
         model_name_or_path: str = "google/flan-t5-small",
         learning_rate: float = 1e-4,
         weight_decay: float = 0.0,
-        embed_dim: int = 768,
         n_hidden: int = 256,
         n_output: int = 3,
         m_h_attn_dropout: float = 0.2,
@@ -23,6 +22,8 @@ class LitT5Classify(LightningModule):
         super().__init__()
         self.encoder = T5EncoderModel.from_pretrained(model_name_or_path)
         self._freeze_encoder()
+
+        embed_dim = self.encoder.config.d_model
         self.classification_head = ClassificationHeadAttn(embed_dim,
                                                           n_hidden,
                                                           n_output,
@@ -33,7 +34,7 @@ class LitT5Classify(LightningModule):
         self.loss = nn.CrossEntropyLoss()
         self.train_loss_history = []
 
-        self.acc = Accuracy(task="multiclass", num_classes=n_output)
+        self.acc_metric = Accuracy(task="multiclass", num_classes=n_output)
 
         # Does frame inspection so find init args
         self.save_hyperparameters()
@@ -44,19 +45,19 @@ class LitT5Classify(LightningModule):
 
     def forward(self, inputs):
         input_ids = inputs['input_ids']
-        attn_mask = inputs['attention_mask']
+        attention_mask = inputs['attention_mask']
         # Pass input through the encoder
         outputs = self.encoder(input_ids)
         last_hidden_states = outputs.last_hidden_state
         # Pass the hidden states through the classification head
-        out = self.classification_head(last_hidden_states, attn_mask)
+        out = self.classification_head(last_hidden_states, attention_mask)
         return out
 
     def training_step(self, batch, batch_idx):
-        y = batch['int_labels']
-        out = self(batch)
+        y_target = batch['int_labels']
+        logits = self(batch)
 
-        loss = self.loss(out, y)
+        loss = self.loss(logits, y_target)
 
         self.log('train/loss_epoch', loss, on_step=False, on_epoch=True)
         self.log('train/loss_step', loss, on_step=True,
@@ -71,25 +72,22 @@ class LitT5Classify(LightningModule):
                      on_step=True, on_epoch=False, prog_bar=True)
             self.train_loss_history = []
 
-        # logs metrics for each training_step,
-        # and the average across the epoch, to the progress bar and logger
-        # self.log('train/loss', loss, on_step=True,
-        #          on_epoch=True, prog_bar=True, logger=True)
         return {"loss": loss}
 
     def validation_step(self, batch, batch_idx, dataloader_idx=0):
-        y = batch['int_labels']
-        out = self(batch)
+        y_target = batch['int_labels']
+        logits = self(batch)
 
-        val_loss = self.loss(out, y)
+        val_loss = self.loss(logits, y_target)
 
-        y_hat = torch.argmax(out, dim=-1)
-        self.acc.update(y_hat, y)
+        y_hat = torch.argmax(logits, dim=-1)
+        self.acc_metric.update(y_hat, y_target)
 
         self.log_dict({'val/loss': val_loss,
-                       'val/acc': self.acc,
+                       'val/acc': self.acc_metric,
                        }, prog_bar=True)
-        return {'val_loss': val_loss, }
+        return {'val_loss': val_loss,
+                'y_hat': y_hat}
 
     def configure_optimizers(self):
         # Might also add lr_scheduler
