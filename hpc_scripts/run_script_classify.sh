@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 #SBATCH --time=10:00:00
 #SBATCH --partition=gpu
-#SBATCH --gres=gpu:v100:1
-#SBATCH --job-name=FULL_ESNLI
+#SBATCH --job-name=Classify-Train
 #SBATCH --profile=task
 
 # Use scratch due to limited space on /home
@@ -23,6 +22,7 @@ cd $TMPDIR/NLP-Explanations-for-NLI/
 python3 train_t5.py \
 --model_name google/flan-t5-base \
 --data_path /scratch/$USER/datasets/esnli_classify \
+--run_name Classify-Train \
 --checkpoint_save_path /scratch/$USER/checkpoints/ \
 --classify True \
 --fine_tune_mode full \

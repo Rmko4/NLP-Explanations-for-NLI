@@ -10,6 +10,8 @@ def get_args():
                         help='The name or path of the pre-trained T5 model to fine-tune.')
     parser.add_argument('--data_path', type=str, default='~/datasets/esnli/',
                         help='The path to the ESNLI dataset.')
+    parser.add_argument('--run_name', type=str, default='Fine-Tuning',
+                        help='The name of the run.')
     parser.add_argument('--checkpoint_load_path', type=str, default=None,
                         help='The path to the directory where checkpoint will be loaded from.')
     parser.add_argument('--checkpoint_save_path', type=str, default='~/models/',

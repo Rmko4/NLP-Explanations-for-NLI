@@ -17,10 +17,11 @@ from t5_lit_classify import LitT5Classify
 
 # Added datetime to name to avoid conflicts
 time = datetime.now().strftime("%m%d-%H:%M:%S")
-run_name = "Fine-Tuning_" + time
 
 
 def main(hparams):
+    run_name = f"{hparams.run_name}_{time}"
+
     # Create wandb logger
     wandb_logger = WandbLogger(
         name=run_name,
