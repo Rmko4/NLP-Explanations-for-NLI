@@ -50,6 +50,7 @@ class ClassificationHeadAttn(nn.Module):
 
     def forward(self, x, attention_mask):
         bool_attn_mask = self._preprocess_attention_mask(attention_mask)
+        x = torch.squeeze(x)
         attn_out, _ = self.m_h_attn(x, x, x, attn_mask=bool_attn_mask)
         # average over the sequence dimension
         avg_pool = torch.nanmean(attn_out, dim=1)
