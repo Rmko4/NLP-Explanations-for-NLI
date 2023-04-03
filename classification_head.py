@@ -8,16 +8,15 @@ class ClassificationHeadRNN(nn.Module):
                  n_hidden: int = 256,
                  n_output: int = 3,
                  n_lstm_layers: int = 1,
-                 lstm_droput: float = 0.5, ):
+                 lstm_dropout: float = 0.2):
         super().__init__()
         self.lstm = nn.LSTM(input_size=n_features,
                             hidden_size=n_hidden,
                             num_layers=n_lstm_layers,
                             batch_first=True,
-                            bidirectional=True,
-                            dropout=lstm_droput)
-        self.classification_layer = nn.Sequential(nn.Linear(2*n_hidden, n_output),
-                                                  torch.nn.Softmax(dim=-1))
+                            bidirectional=False,
+                            dropout=lstm_dropout)
+        self.classification_layer = nn.Linear(n_hidden, n_output)
 
     def forward(self, x):
         h_n, _ = self.lstm(x)
@@ -50,7 +49,6 @@ class ClassificationHeadAttn(nn.Module):
 
     def forward(self, x, attention_mask):
         bool_attn_mask = self._preprocess_attention_mask(attention_mask)
-        bool_attn_mask = bool_attn_mask.unsqueeze(dim=1)
         attn_out, _ = self.m_h_attn(x, x, x, attn_mask=bool_attn_mask)
         # average over the sequence dimension
         avg_pool = torch.nanmean(attn_out, dim=1)

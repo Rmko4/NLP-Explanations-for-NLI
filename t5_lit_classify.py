@@ -6,7 +6,7 @@ from torchmetrics import Accuracy
 from transformers import T5EncoderModel, T5Tokenizer
 
 from t5_lit_module import LitT5
-from classification_head import ClassificationHeadAttn
+from classification_head import ClassificationHeadAttn, ClassificationHeadRNN
 
 
 class LitT5Classify(LightningModule):
@@ -32,10 +32,14 @@ class LitT5Classify(LightningModule):
         self._freeze_encoder()
 
         embed_dim = self.encoder.config.d_model
-        self.classification_head = ClassificationHeadAttn(embed_dim,
-                                                          n_hidden,
-                                                          n_output,
-                                                          m_h_attn_dropout)
+        self.classification_head = ClassificationHeadRNN(embed_dim,
+                                                         n_hidden,
+                                                         n_output,
+                                                         )
+        # self.classification_head = ClassificationHeadAttn(embed_dim,
+        #                                                   n_hidden,
+        #                                                   n_output,
+        #                                                   m_h_attn_dropout)
 
         self.tokenizer = T5Tokenizer.from_pretrained(model_name_or_path)
 
@@ -58,7 +62,8 @@ class LitT5Classify(LightningModule):
         outputs = self.encoder(input_ids)
         last_hidden_states = outputs.last_hidden_state
         # Pass the hidden states through the classification head
-        out = self.classification_head(last_hidden_states, attention_mask)
+        # out = self.classification_head(last_hidden_states, attention_mask)
+        out = self.classification_head(last_hidden_states)
         return out
 
     def training_step(self, batch, batch_idx):

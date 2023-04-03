@@ -53,7 +53,12 @@
             "--run_name", "Classify-Train",
             "--learning_rate", "1e-4",
             "--checkpoint_save_path", "~/models/checkpoints/",
-            "--checkpoint_load_path", "~/models/checkpoints/model_full"]
+            "--checkpoint_load_path", "~/models/checkpoints/model_full",
+            "--train_batch_size", "2",
+            "--eval_batch_size", "2",
+            "--max_epochs", "10",
+            "--log_every_n_steps", "200",
+            "--val_check_interval", "1000",]
         },
     ]
 }
