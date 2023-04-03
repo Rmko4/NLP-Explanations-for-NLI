@@ -1,18 +1,17 @@
 
-from datetime import datetime
 import os
+from datetime import datetime
+from statistics import mean
 
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import WandbLogger
 from torchmetrics import CHRFScore
-from torchmetrics.text.rouge import ROUGEScore
 from torchmetrics.functional.text.bert import bert_score
-from statistics import mean 
+from torchmetrics.text.rouge import ROUGEScore
 
 from esnli_data import ESNLIDataModule
-from t5_lit_module import LitT5
 from parse_args_T5_run import get_args
-
+from t5_lit_module import LitT5
 
 # Make sure to login to wandb before running this script
 # Run: wandb login

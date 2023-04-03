@@ -1,0 +1,9 @@
+torch
+pytorch-lightning
+torchmetrics
+numpy
+wandb
+peft
+transformers
+pandas
+datasets
