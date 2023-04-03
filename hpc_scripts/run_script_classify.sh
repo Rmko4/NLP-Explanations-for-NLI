@@ -2,6 +2,7 @@
 #SBATCH --time=10:00:00
 #SBATCH --gpus-per-node=a100:1
 #SBATCH --job-name=Classify-Train
+#SBATCH --mem=128GB
 #SBATCH --profile=task
 
 # Use scratch due to limited space on /home
@@ -27,8 +28,8 @@ python3 train_t5.py \
 --checkpoint_load_path /scratch/$USER/checkpoints/model_full \
 --classify True \
 --learning_rate 1e-4 \
---train_batch_size 16 \
---eval_batch_size 16 \
+--train_batch_size 32 \
+--eval_batch_size 32 \
 --max_epochs 10 \
 --log_every_n_steps 200 \
 --val_check_interval 1000 \
