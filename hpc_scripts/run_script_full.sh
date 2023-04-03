@@ -12,22 +12,19 @@ export WANDB_CACHE_DIR=/scratch/$USER/.cache/wandb
 # Copy git repo to local
 cp -r ~/NLP-Explanations-for-NLI/ $TMPDIR
 
-mkdir -p $TMPDIR/datasets/esnli
-
-cp -r /data/$USER/datasets/esnli $TMPDIR/datasets/esnli
-
 module load Python
 module load cuDNN
 module load CUDA
-source /data/$USER/.envs/nlpenv/bin/activate
+source /scratch/$USER/envs/nlpenv/bin/activate
 
 # cd do working directory (repo)
 cd $TMPDIR/NLP-Explanations-for-NLI/
 
 python3 train_t5.py \
 --model_name google/flan-t5-base \
---data_path /data/$USER/datasets/esnli \
---checkpoint_save_path /data/$USER/checkpoints/ \
+--data_path /scratch/$USER/datasets/esnli_classify \
+--checkpoint_save_path /scratch/$USER/checkpoints/ \
+--run_name Fine-Tuning-Full \
 --fine_tune_mode full \
 --learning_rate 1e-4 \
 --train_batch_size 32 \

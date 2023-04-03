@@ -47,11 +47,13 @@
             "program": "${workspaceFolder}/train_t5.py",
             "console": "integratedTerminal",
             "justMyCode": false,
-            "args": ["--model_name", "google/flan-t5-small",
+            "args": ["--model_name", "google/flan-t5-base",
             "--classify", "True",
             "--data_path", "~/datasets/esnli_classify",
             "--run_name", "Classify-Train",
-            "--learning_rate", "1e-5"]
+            "--learning_rate", "1e-4",
+            "--checkpoint_save_path", "~/models/checkpoints/",
+            "--checkpoint_load_path", "~/models/checkpoints/model_full"]
         },
     ]
 }

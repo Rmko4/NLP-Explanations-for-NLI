@@ -27,8 +27,8 @@ python3 train_t5.py \
 --checkpoint_load_path /scratch/$USER/checkpoints/model_full \
 --classify True \
 --learning_rate 1e-4 \
---train_batch_size 32 \
---eval_batch_size 32 \
+--train_batch_size 16 \
+--eval_batch_size 16 \
 --max_epochs 10 \
 --log_every_n_steps 200 \
 --val_check_interval 1000 \

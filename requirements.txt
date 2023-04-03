@@ -8,3 +8,4 @@ transformers
 pandas
 datasets
 sentencepiece
+nltk

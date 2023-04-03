@@ -104,7 +104,8 @@ def main(hparams):
     # trainer.validate(model, data_module)
 
     # Train
-    trainer.fit(model, data_module, ckpt_path=hparams.checkpoint_load_path)
+    ckpt_path = hparams.checkpoint_load_path if not hparams.classify else None
+    trainer.fit(model, data_module, ckpt_path=ckpt_path)
 
 
 if __name__ == "__main__":
