@@ -62,7 +62,8 @@ def main(hparams):
                       learning_rate=hparams.learning_rate)
     else:
         model = LitT5Classify(model_name_or_path=hparams.model_name,
-                              learning_rate=hparams.learning_rate,)
+                              learning_rate=hparams.learning_rate,
+                              checkpoint_path=hparams.checkpoint_load_path)
 
 
     # Create checkpoint callback

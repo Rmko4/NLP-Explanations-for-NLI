@@ -5,6 +5,7 @@ from torch.optim import AdamW
 from torchmetrics import Accuracy
 from transformers import T5EncoderModel, T5Tokenizer
 
+from t5_lit_module import LitT5
 from classification_head import ClassificationHeadAttn
 
 
@@ -12,6 +13,7 @@ class LitT5Classify(LightningModule):
     def __init__(
         self,
         model_name_or_path: str = "google/flan-t5-small",
+        checkpoint_path: str = None,
         learning_rate: float = 1e-4,
         weight_decay: float = 0.0,
         n_hidden: int = 256,
@@ -20,7 +22,13 @@ class LitT5Classify(LightningModule):
         **kwargs,
     ):
         super().__init__()
-        self.encoder = T5EncoderModel.from_pretrained(model_name_or_path)
+        if checkpoint_path:
+            model = LitT5.load_from_checkpoint(
+                checkpoint_path=checkpoint_path,
+            )
+            self.encoder = model.get_encoder()
+        else:
+            self.encoder = T5EncoderModel.from_pretrained(model_name_or_path)
         self._freeze_encoder()
 
         embed_dim = self.encoder.config.d_model

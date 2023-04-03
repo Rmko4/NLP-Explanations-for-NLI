@@ -70,6 +70,12 @@ class LitT5(LightningModule):
             self.model: PeftModelForSeq2SeqLM = get_peft_model(
                 self.model, self.peft_config)
 
+    def get_encoder(self):
+        if self.hparams.fine_tune_mode == FineTuneMode.LORA:
+            return self.model.base_model.get_encoder()
+        else:
+            return self.model.get_encoder()
+
     def forward(self, **inputs):
         return self.model(**inputs)
 

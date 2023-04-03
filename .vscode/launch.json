@@ -34,8 +34,6 @@
             "console": "integratedTerminal",
             "justMyCode": false,
             "args": ["--model_name", "google/flan-t5-small",
-            "--continue_from_checkpoint",
-            "--checkpoint_path", "~/models/loss=1.20.ckpt",
             "--fine_tune_mode", "lora",
             "--data_path", "~/datasets/esnli",
             "--eval_batch_size", "8",
@@ -51,7 +49,9 @@
             "justMyCode": false,
             "args": ["--model_name", "google/flan-t5-small",
             "--classify", "True",
-            "--data_path", "~/datasets/esnli_classify"]
+            "--data_path", "~/datasets/esnli_classify",
+            "--run_name", "Classify-Train",
+            "--learning_rate", "1e-5"]
         },
     ]
 }
