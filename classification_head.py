@@ -43,15 +43,16 @@ class ClassificationHeadAttn(nn.Module):
 
     def _preprocess_attention_mask(self, attention_mask):
         x = ~attention_mask.bool()
-        x = torch.unsqueeze(x, dim=-1)
-        x = x.repeat(1, 1, attention_mask.shape[-1])
+        x = torch.unsqueeze(x, dim=1)
+        x = x.repeat(1, attention_mask.shape[-1], 1)
         return x
 
     def forward(self, x, attention_mask):
         bool_attn_mask = self._preprocess_attention_mask(attention_mask)
         attn_out, _ = self.m_h_attn(x, x, x, attn_mask=bool_attn_mask)
         # average over the sequence dimension
-        avg_pool = torch.nanmean(attn_out, dim=1)
+        masked_attn_out = attention_mask.unsqueeze(-1) * attn_out
+        avg_pool = torch.mean(masked_attn_out, dim=1)
         x = self.l1(avg_pool)
         x = self.ReLU(x)
         logits = self.l_out(x)
@@ -71,6 +72,12 @@ if __name__ == '__main__':
     attn_mask = data['attention_mask']
 
     head = ClassificationHeadAttn()
+
     x = torch.randn(16, attn_mask.shape[1], 512)
     logits = head(x, attn_mask)
+    loss = nn.CrossEntropyLoss()
+    y_target = torch.randint(0, 3, (16,))
+    out = loss(logits, y_target)
+    out.backward()
+    
     pass
