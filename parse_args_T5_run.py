@@ -31,11 +31,11 @@ def get_args():
                         help='The number of training steps to log after.')
     parser.add_argument('--val_check_interval', type=int, default=1000,
                         help='The number of training steps between each validation run.')
-    parser.add_argument('--limit_val_batches', type=int, default=50,
+    parser.add_argument('--limit_val_batches', type=int, default=None,
                         help='The number of batches to use for validation.')
-    parser.add_argument('--limit_test_batches', type=int, default=50,
+    parser.add_argument('--limit_test_batches', type=int, default=None,
                         help='The number of batches to use for testing.')
-    parser.add_argument('--limit_predict_batches', type=int, default=50,
+    parser.add_argument('--limit_predict_batches', type=int, default=None,
                         help='The number of batches to use for prediction.')
     parser.add_argument('--n_text_samples', type=int, default=10,
                         help='The number of samples to generate for each logging interval.')

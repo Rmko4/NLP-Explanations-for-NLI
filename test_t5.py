@@ -19,7 +19,6 @@ from t5_lit_classify import LitT5Classify
 
 # Added datetime to name to avoid conflicts
 time = datetime.now().strftime("%m%d-%H:%M:%S")
-run_name = "Testing_" + time
 
 def evaluate(generated_texts, reference_texts):
     # implement scores
@@ -45,6 +44,8 @@ def evaluate(generated_texts, reference_texts):
     print(f"chrf={chrf_avg:.2f}, rouge={rouge_avg:.2f}, F1={f1:.2f}, bert={bert_avg:.2f}")
 
 def main(hparams):
+    run_name = f"{hparams.run_name}_{time}"
+
     # Create wandb logger
     wandb_logger = WandbLogger(
         name=run_name,
@@ -83,16 +84,15 @@ def main(hparams):
     )
 
     # Test model
-    #TODO: This does not work for me
-    # trainer.test(model, datamodule=data_module)
+    trainer.test(model, datamodule=data_module)
 
     # Predict with model
-    out = trainer.predict(model, datamodule=data_module)
-    input_texts = out[0]['input_text']
-    generated_texts = out[0]['generated_text']
-    reference_texts = out[0]['reference_texts']
+    # out = trainer.predict(model, datamodule=data_module)
+    # input_texts = out[0]['input_text']
+    # generated_texts = out[0]['generated_text']
+    # reference_texts = out[0]['reference_texts']
 
-    evaluate(generated_texts, reference_texts)
+    # evaluate(generated_texts, reference_texts)
 
 if __name__ == "__main__":
     hparams = get_args()

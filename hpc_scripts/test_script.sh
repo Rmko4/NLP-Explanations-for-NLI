@@ -1,12 +1,29 @@
+#!/usr/bin/env bash
+#SBATCH --time=10:00:00
+#SBATCH --gpus-per-node=a100:1
+#SBATCH --job-name=test
+#SBATCH --mem=128GB
+#SBATCH --profile=task
+
 # Use scratch due to limited space on /home
 export HF_HOME=/scratch/$USER/.cache/huggingface
 export WANDB_CACHE_DIR=/scratch/$USER/.cache/wandb
 
+# Copy git repo to local
+cp -r ~/NLP-Explanations-for-NLI/ $TMPDIR
+
+module load Python
+module load cuDNN
+module load CUDA
+source /scratch/$USER/envs/nlpenv/bin/activate
+
+# cd to working directory (repo)
+cd $TMPDIR/NLP-Explanations-for-NLI/
+
 python3 test_t5.py \
 --model_name google/flan-t5-base \
---data_path $TMPDIR/datasets/esnli \
---checkpoint_save_path /data/$USER/checkpoints/esnli-epoch=00-val/loss=1.20.ckpt \
---eval_batch_size 32 \
+--data_path /scratch/$USER/datasets/esnli \
+--checkpoint_load_path /scratch/$USER/checkpoints/model_full \
+--eval_batch_size 64 \
 --log_every_n_steps 200 \
---limit_test_batches 25 \
---limit_predict_batches 25
+--run_name Testing_Full
