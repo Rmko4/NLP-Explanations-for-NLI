@@ -2,7 +2,7 @@ import torch
 from pytorch_lightning import LightningModule
 from torch import nn
 from torch.optim import AdamW
-from torchmetrics import Accuracy
+from torchmetrics import Accuracy, F1Score
 from transformers import T5EncoderModel, T5Tokenizer
 
 from t5_lit_module import LitT5
@@ -33,9 +33,9 @@ class LitT5Classify(LightningModule):
 
         embed_dim = self.encoder.config.d_model
         # self.classification_head = ClassificationHeadRNN(embed_dim,
-                                                        #  n_hidden,
-                                                        #  n_output,
-                                                        #  )
+        #  n_hidden,
+        #  n_output,
+        #  )
         self.classification_head = ClassificationHeadAttn(embed_dim,
                                                           n_hidden,
                                                           n_output,
@@ -47,6 +47,7 @@ class LitT5Classify(LightningModule):
         self.train_loss_history = []
 
         self.acc_metric = Accuracy(task="multiclass", num_classes=n_output)
+        self.f1_metric = F1Score(task="multiclass", num_classes=n_output)
 
         # Does frame inspection so find init args
         self.save_hyperparameters()
@@ -100,6 +101,28 @@ class LitT5Classify(LightningModule):
                        }, prog_bar=True)
         return {'val_loss': val_loss,
                 'y_hat': y_hat}
+
+    def test_step(self, batch, batch_idx, dataloader_idx=0):
+        y_target = batch['int_labels']
+        logits = self(batch)
+
+        y_hat = torch.argmax(logits, dim=-1)
+        self.acc_metric.update(y_hat, y_target)
+        self.f1_metric.update(y_hat, y_target)
+
+        self.log_dict({'val/acc': self.acc_metric,
+                       'val/f1': self.f1_metric,
+                       }, prog_bar=True)
+
+    def predict_step(self, batch, batch_idx, dataloader_idx=0):
+        logits = self(batch)
+        y_target = batch['int_labels']
+        y_hat = torch.argmax(logits, dim=-1)
+
+        output = {'reference_label': y_target,
+                  'predicted_label': y_hat}
+
+        return output
 
     def configure_optimizers(self):
         # Might also add lr_scheduler

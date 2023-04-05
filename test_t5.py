@@ -20,12 +20,13 @@ from t5_lit_classify import LitT5Classify
 # Added datetime to name to avoid conflicts
 time = datetime.now().strftime("%m%d-%H:%M:%S")
 
+
 def evaluate(generated_texts, reference_texts):
     # implement scores
     chrf = CHRFScore()
     rouge = ROUGEScore()
 
-    chrf_avg = 0 
+    chrf_avg = 0
     rouge_avg = 0
     bert_avg = 0
 
@@ -41,7 +42,9 @@ def evaluate(generated_texts, reference_texts):
     # implement F1 for CHRF and ROUGE
     f1 = 2 * (chrf_avg * rouge_avg) / (chrf_avg + rouge_avg)
 
-    print(f"chrf={chrf_avg:.2f}, rouge={rouge_avg:.2f}, F1={f1:.2f}, bert={bert_avg:.2f}")
+    print(
+        f"chrf={chrf_avg:.2f}, rouge={rouge_avg:.2f}, F1={f1:.2f}, bert={bert_avg:.2f}")
+
 
 def main(hparams):
     run_name = f"{hparams.run_name}_{time}"
@@ -55,13 +58,15 @@ def main(hparams):
     )
 
     hparams.data_path = os.path.expanduser(hparams.data_path)
-    hparams.checkpoint_load_path = os.path.expanduser(hparams.checkpoint_load_path)
+    hparams.checkpoint_load_path = os.path.expanduser(
+        hparams.checkpoint_load_path)
 
     # Create data module
     data_module = ESNLIDataModule(
         model_name_or_path=hparams.model_name,
         dataset_path=hparams.data_path,
         eval_batch_size=hparams.eval_batch_size,
+        classify=hparams.classify,
     )
 
     # Load model from checkpoint
@@ -93,6 +98,7 @@ def main(hparams):
     # reference_texts = out[0]['reference_texts']
 
     # evaluate(generated_texts, reference_texts)
+
 
 if __name__ == "__main__":
     hparams = get_args()
