@@ -124,15 +124,23 @@ def main(hparams):
         input_texts = [item for sublist in input_texts for item in sublist]
         generated_texts = [item for sublist in generated_texts for item in sublist]
 
-        reference_texts = []
+        # Flatten reference texts
+        flattened_reference_texts = []
         for batch in reference_texts:
             reference_texts_t = list(map(list, zip(*batch)))
-            reference_texts.extend(reference_texts_t)
+            flattened_reference_texts.extend(reference_texts_t)
+
+        reference_texts = list(map(list, zip(*flattened_reference_texts)))
+
+        print(input_texts)
+        print(generated_texts)
+        print(reference_texts)
+        
 
         # Make pandas dataframe out of input, generated and reference texts
         df = pd.DataFrame(
-            list(zip(input_texts, generated_texts, reference_texts)),
-            columns=['input_text', 'generated_text', 'reference_texts']
+            list(zip(input_texts, generated_texts, reference_texts[0], reference_texts[1], reference_texts[2])),
+            columns=['input_text', 'generated_text', 'reference_texts_0', 'reference_texts_1', 'reference_texts_2']
         )
 
         # Save as csv

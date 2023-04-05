@@ -26,7 +26,7 @@ python3 test_t5.py \
 --data_path /scratch/$USER/datasets/esnli \
 --checkpoint_load_path /scratch/$USER/checkpoints/model_full \
 --results_save_path /scratch/$USER/results/ \
---eval_batch_size 32 \
+--eval_batch_size 4 \
 --log_every_n_steps 200 \
 --limit_predict_batches 2 \
 --run_name Testing_Full
