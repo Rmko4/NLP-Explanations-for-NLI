@@ -119,6 +119,10 @@ class LitT5Classify(LightningModule):
         y_target = batch['int_labels']
         y_hat = torch.argmax(logits, dim=-1)
 
+        # Convert tensors to list of ints
+        y_target = y_target.tolist()
+        y_hat.tolist()
+
         output = {'reference_label': y_target,
                   'predicted_label': y_hat}
 
