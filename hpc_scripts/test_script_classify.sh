@@ -28,6 +28,5 @@ python3 test_t5.py \
 --results_save_path /scratch/$USER/results/ \
 --eval_batch_size 32 \
 --log_every_n_steps 200 \
---limit_test_batches 10 \ 
 --run_name Testing_Classify_Full \
 --classify True
