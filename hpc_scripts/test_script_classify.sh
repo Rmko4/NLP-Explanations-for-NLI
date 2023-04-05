@@ -24,11 +24,9 @@ cd $TMPDIR/NLP-Explanations-for-NLI/
 python3 test_t5.py \
 --model_name google/flan-t5-base \
 --data_path /scratch/$USER/datasets/esnli_classify \
---checkpoint_load_path /scratch/$USER/checkpoints/model_full_classifier \
+--checkpoint_load_path /scratch/$USER/checkpoints/model_lora_classifier \
 --results_save_path /scratch/$USER/results/ \
 --eval_batch_size 32 \
 --log_every_n_steps 200 \
---limit_test_batches 2 \
---limit_predict_batches 2 \
---run_name Testing_Classify_Full \
+--run_name Testing_Classify_Lora \
 --classify True

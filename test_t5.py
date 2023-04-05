@@ -92,7 +92,7 @@ def main(hparams):
     )
 
     # Test model
-    trainer.test(model, datamodule=data_module)
+    # trainer.test(model, datamodule=data_module)
 
     # Predict with model
     out = trainer.predict(model, datamodule=data_module)
@@ -123,7 +123,11 @@ def main(hparams):
         # Flatten lists
         input_texts = [item for sublist in input_texts for item in sublist]
         generated_texts = [item for sublist in generated_texts for item in sublist]
-        reference_texts = [item for sublist in reference_texts for item in sublist]
+
+        reference_texts = []
+        for batch in reference_texts:
+            reference_texts_t = list(map(list, zip(*batch)))
+            reference_texts.extend(reference_texts_t)
 
         # Make pandas dataframe out of input, generated and reference texts
         df = pd.DataFrame(
