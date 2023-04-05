@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #SBATCH --time=10:00:00
-#SBATCH --gpus-per-node=a100:1
+#SBATCH --gpus-per-node=a100.20GB:1
 #SBATCH --job-name=test
 #SBATCH --mem=64GB
 #SBATCH --profile=task
@@ -24,8 +24,8 @@ cd $TMPDIR/NLP-Explanations-for-NLI/
 python3 test_t5.py \
 --model_name google/flan-t5-base \
 --data_path /scratch/$USER/datasets/esnli \
---checkpoint_load_path /scratch/$USER/checkpoints/model_lora \
+--checkpoint_load_path /scratch/$USER/checkpoints/model_full \
 --results_save_path /scratch/$USER/results/ \
 --eval_batch_size 32 \
 --log_every_n_steps 200 \
---run_name Testing_Lora
+--run_name Testing_Full
