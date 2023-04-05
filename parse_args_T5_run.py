@@ -3,7 +3,8 @@ from typing import Union
 
 
 def get_args():
-    parser = argparse.ArgumentParser(description='T5 ESNLI Fine-Tuning and Testing')
+    parser = argparse.ArgumentParser(
+        description='T5 ESNLI Fine-Tuning and Testing')
 
     # Add arguments here
     parser.add_argument('--model_name', type=str, default='google/flan-t5-base',
@@ -41,10 +42,12 @@ def get_args():
     parser.add_argument('--log_every_n_generated', type=int, default=20,
                         help='The number of training steps between each logging of generated samples.')
     parser.add_argument('--lora_r', type=int, default=8, help='LORA R value')
-    parser.add_argument('--lora_alpha', type=int, default=32, help='LORA alpha value')
-    parser.add_argument('--lora_dropout', type=float, default=0.1, help='LORA dropout value')
+    parser.add_argument('--lora_alpha', type=int,
+                        default=32, help='LORA alpha value')
+    parser.add_argument('--lora_dropout', type=float,
+                        default=0.1, help='LORA dropout value')
     parser.add_argument('--classify', type=bool, default=False,
                         help='Wether to load the dataset with int labels for classification')
-
+    
     args = parser.parse_args()
     return args

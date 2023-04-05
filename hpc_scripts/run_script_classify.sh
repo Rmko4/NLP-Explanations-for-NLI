@@ -23,13 +23,13 @@ cd $TMPDIR/NLP-Explanations-for-NLI/
 python3 train_t5.py \
 --model_name google/flan-t5-base \
 --data_path /scratch/$USER/datasets/esnli_classify \
---run_name Classify-Train \
+--run_name Classify-Train-Lora \
 --checkpoint_save_path /scratch/$USER/checkpoints/ \
---checkpoint_load_path /scratch/$USER/checkpoints/model_full \
+--checkpoint_load_path /scratch/$USER/checkpoints/model_lora \
 --classify True \
---learning_rate 1e-4 \
+--learning_rate 1e-5 \
 --train_batch_size 32 \
 --eval_batch_size 32 \
---max_epochs 10 \
+--max_epochs 1 \
 --log_every_n_steps 200 \
---val_check_interval 1000 \
+--val_check_interval 2000

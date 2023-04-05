@@ -63,7 +63,6 @@ class LitT5Classify(LightningModule):
         last_hidden_states = outputs.last_hidden_state
         # Pass the hidden states through the classification head
         out = self.classification_head(last_hidden_states, attention_mask)
-        # out = self.classification_head(last_hidden_states)
         return out
 
     def training_step(self, batch, batch_idx):

@@ -12,6 +12,7 @@ from torchmetrics.text.rouge import ROUGEScore
 from esnli_data import ESNLIDataModule
 from parse_args_T5_run import get_args
 from t5_lit_module import LitT5
+from t5_lit_classify import LitT5Classify
 
 # Make sure to login to wandb before running this script
 # Run: wandb login
@@ -63,9 +64,14 @@ def main(hparams):
     )
 
     # Load model from checkpoint
-    model = LitT5.load_from_checkpoint(
-        checkpoint_path=hparams.checkpoint_load_path,
-    )
+    if not hparams.classify:
+        model = LitT5.load_from_checkpoint(
+            checkpoint_path=hparams.checkpoint_load_path,
+        )
+    else:
+        model = LitT5Classify.load_from_checkpoint(
+            checkpoint_path=hparams.checkpoint_load_path,
+        )
 
     # Create trainer
     trainer = Trainer(

@@ -51,6 +51,7 @@ class LitT5(LightningModule):
             model_name_or_path)
 
         self.bleu_metric = textmetrics.BLEUScore(n_gram=3)
+        self.chrf_metric = textmetrics.CHRFScore()
         self.rouge_metric = textmetrics.ROUGEScore()
         self.perplexity_metric = textmetrics.Perplexity(ignore_index=-100)
         self.bert_metric = textmetrics.BERTScore()
@@ -184,6 +185,7 @@ class LitT5(LightningModule):
 
         # Update suffices as we are only interested in epoch score
         self.bleu_metric.update(generated_text, reference_texts)
+        self.chrf_metric.update(generated_text, reference_texts)
         for i in range(3):
             self.bert_metric.update(generated_text, reference_texts[i])
             self.rouge_metric.update(generated_text, reference_texts[i])
@@ -195,6 +197,11 @@ class LitT5(LightningModule):
         blue_score = self.bleu_metric.compute()
         self.log('test/blue', blue_score)
         self.bleu_metric.reset()
+
+        # Log test chrf score
+        chrf_score = self.chrf_metric.compute()
+        self.log('test/chrf', chrf_score)
+        self.chrf_metric.reset()
 
         # Log test bert score
         bert_score_dict = self.bert_metric.compute()
