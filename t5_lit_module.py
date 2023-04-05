@@ -206,13 +206,15 @@ class LitT5(LightningModule):
 
         # Log test bert score
         bert_score_dict = self.bert_metric.compute()
-        bert_score = {k: sum(v) / len(v) for k, v in bert_score_dict.items()}
-        self.log('test/bert', bert_score)
+        bert_score = {f'test/bert/{k}': sum(v) / len(v) for k, v in bert_score_dict.items()}
+        self.log_dict(bert_score)
         self.bert_metric.reset()
 
         # Log test rouge score
         rouge_score = self.rouge_metric.compute()
-        self.log('test/rouge', rouge_score)
+        # Add test/rouge prefix to the keys
+        rouge_score = {f'test/rouge/{k}': v for k, v in rouge_score.items()}
+        self.log_dict(rouge_score)
         self.rouge_metric.reset()
 
     def _batch_generate(self, batch):
