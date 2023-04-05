@@ -193,7 +193,7 @@ class LitT5(LightningModule):
 
         return output
 
-    def on_test_epoch_end(self, outputs):
+    def on_test_epoch_end(self):
         # Log test blue score
         blue_score = self.bleu_metric.compute()
         self.log('test/blue', blue_score)
