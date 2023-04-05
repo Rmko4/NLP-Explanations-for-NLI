@@ -17,6 +17,8 @@ def get_args():
                         help='The path to the directory where checkpoint will be loaded from.')
     parser.add_argument('--checkpoint_save_path', type=str, default='~/models/',
                         help='The path to the directory where checkpoints will be saved.')
+    parser.add_argument('--results_save_path', type=str, default='results/',
+                        help='The path to the directory where results will be saved.')
     parser.add_argument('--fine_tune_mode', type=str, default='full',
                         help='The mode to use for fine-tuning. Can be one of "full", "lora", or "gradual_unfreezing".')
     parser.add_argument('--learning_rate', type=float, default=1e-4,

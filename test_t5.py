@@ -3,6 +3,7 @@ import os
 from datetime import datetime
 from statistics import mean
 
+import pandas as pd
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers import WandbLogger
 from torchmetrics import CHRFScore
@@ -11,8 +12,8 @@ from torchmetrics.text.rouge import ROUGEScore
 
 from esnli_data import ESNLIDataModule
 from parse_args_T5_run import get_args
-from t5_lit_module import LitT5
 from t5_lit_classify import LitT5Classify
+from t5_lit_module import LitT5
 
 # Make sure to login to wandb before running this script
 # Run: wandb login
@@ -60,6 +61,8 @@ def main(hparams):
     hparams.data_path = os.path.expanduser(hparams.data_path)
     hparams.checkpoint_load_path = os.path.expanduser(
         hparams.checkpoint_load_path)
+    hparams.results_save_path = os.path.expanduser(
+        hparams.results_save_path)
 
     # Create data module
     data_module = ESNLIDataModule(
@@ -92,12 +95,36 @@ def main(hparams):
     trainer.test(model, datamodule=data_module)
 
     # Predict with model
-    # out = trainer.predict(model, datamodule=data_module)
-    # input_texts = out[0]['input_text']
-    # generated_texts = out[0]['generated_text']
-    # reference_texts = out[0]['reference_texts']
+    out = trainer.predict(model, datamodule=data_module)
 
-    # evaluate(generated_texts, reference_texts)
+    if hparams.classify:
+        # Remove batch dimension
+        reference_labels = [batch['reference_label'] for batch in out]
+        predicted_labels = [batch['predicted_label'] for batch in out]
+
+        # Make pandas dataframe out of reference and predicted label
+        df = pd.DataFrame(
+            list(zip(reference_labels, predicted_labels)),
+            columns=['reference_label', 'predicted_label']
+        )
+
+        # Save as csv
+        df.to_csv(f"{hparams.results_save_path}/{run_name}.csv", index=False)
+    else:
+        # Remove batch dimension
+        input_texts = [batch['input_text'] for batch in out]
+        generated_texts = [batch['generated_text'] for batch in out]
+        reference_texts = [batch['reference_texts'] for batch in out]
+
+        # Make pandas dataframe out of input, generated and reference texts
+        df = pd.DataFrame(
+            list(zip(input_texts, generated_texts, reference_texts)),
+            columns=['input_text', 'generated_text', 'reference_texts']
+        )
+
+        # Save as csv
+        df.to_csv(f"{hparams.results_save_path}/{run_name}.csv", index=False)
+
 
 
 if __name__ == "__main__":
