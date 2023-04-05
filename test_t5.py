@@ -102,8 +102,9 @@ def main(hparams):
         reference_labels = [batch['reference_label'] for batch in out]
         predicted_labels = [batch['predicted_label'] for batch in out]
 
-        print(f"Reference labels: {reference_labels}")
-        print(f"Predicted labels: {predicted_labels}")
+        # Flatten lists
+        reference_labels = [item for sublist in reference_labels for item in sublist]
+        predicted_labels = [item for sublist in predicted_labels for item in sublist]
 
         # Make pandas dataframe out of reference and predicted label
         df = pd.DataFrame(
@@ -118,6 +119,11 @@ def main(hparams):
         input_texts = [batch['input_text'] for batch in out]
         generated_texts = [batch['generated_text'] for batch in out]
         reference_texts = [batch['reference_texts'] for batch in out]
+
+        # Flatten lists
+        input_texts = [item for sublist in input_texts for item in sublist]
+        generated_texts = [item for sublist in generated_texts for item in sublist]
+        reference_texts = [item for sublist in reference_texts for item in sublist]
 
         # Make pandas dataframe out of input, generated and reference texts
         df = pd.DataFrame(
