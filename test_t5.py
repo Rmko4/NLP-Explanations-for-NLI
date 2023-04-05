@@ -102,6 +102,9 @@ def main(hparams):
         reference_labels = [batch['reference_label'] for batch in out]
         predicted_labels = [batch['predicted_label'] for batch in out]
 
+        print(f"Reference labels: {reference_labels}")
+        print(f"Predicted labels: {predicted_labels}")
+
         # Make pandas dataframe out of reference and predicted label
         df = pd.DataFrame(
             list(zip(reference_labels, predicted_labels)),
