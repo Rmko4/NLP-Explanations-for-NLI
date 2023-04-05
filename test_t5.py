@@ -131,12 +131,7 @@ def main(hparams):
             flattened_reference_texts.extend(reference_texts_t)
 
         reference_texts = list(map(list, zip(*flattened_reference_texts)))
-
-        print(input_texts)
-        print(generated_texts)
-        print(reference_texts)
         
-
         # Make pandas dataframe out of input, generated and reference texts
         df = pd.DataFrame(
             list(zip(input_texts, generated_texts, reference_texts[0], reference_texts[1], reference_texts[2])),
