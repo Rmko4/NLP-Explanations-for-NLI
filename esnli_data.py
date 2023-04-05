@@ -67,7 +67,6 @@ class ESNLIDataModule(LightningDataModule):
             self.datasets['test'],
             batch_size=self.eval_batch_size,
             collate_fn=self.data_collator,
-            num_workers=4,
         )
 
     def predict_dataloader(self) -> DataLoader:

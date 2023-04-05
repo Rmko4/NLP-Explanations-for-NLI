@@ -8,7 +8,7 @@
 # Use scratch due to limited space on /home
 export HF_HOME=/scratch/$USER/.cache/huggingface
 export WANDB_CACHE_DIR=/scratch/$USER/.cache/wandb
-export TOKENIZERS_PARALLELISM=false
+export TOKENIZERS_PARALLELISM=true
 
 # Copy git repo to local
 cp -r ~/NLP-Explanations-for-NLI/ $TMPDIR
@@ -24,7 +24,7 @@ cd $TMPDIR/NLP-Explanations-for-NLI/
 python3 test_t5.py \
 --model_name google/flan-t5-base \
 --data_path /scratch/$USER/datasets/esnli \
---checkpoint_load_path /scratch/$USER/checkpoints/model_full \
---eval_batch_size 64 \
+--checkpoint_load_path /scratch/$USER/checkpoints/model_lora \
+--eval_batch_size 32 \
 --log_every_n_steps 200 \
---run_name Testing_Full
+--run_name Testing_Lora
