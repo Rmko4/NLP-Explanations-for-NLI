@@ -104,15 +104,10 @@ class LitT5(LightningModule):
         return {"loss": loss}
 
     def validation_step(self, batch, batch_idx, dataloader_idx=0):
-        generated_out = self.model.generate(
-            inputs=batch['input_ids'], generation_config=self.generation_config)
-
-        input_text = self.tokenizer.batch_decode(
-            batch['input_ids'], skip_special_tokens=True)
-        generated_text = self.tokenizer.batch_decode(
-            generated_out, skip_special_tokens=True)
-        reference_texts = [self.tokenizer.batch_decode(
-            batch[f'explanation_{i}'], skip_special_tokens=True) for i in range(1, 4)]
+        output = self._batch_generate(batch)
+        input_text = output['input_text']
+        generated_text = output['generated_text']
+        reference_texts = output['reference_texts']
 
         # Update suffices as we are only interested in epoch score
         self.bleu_metric.update(generated_text, reference_texts)
@@ -224,6 +219,8 @@ class LitT5(LightningModule):
             batch[f'explanation_{i}'], skip_special_tokens=True) for i in range(1, 4)]
         input_text = self.tokenizer.batch_decode(
             batch['input_ids'], skip_special_tokens=True)
+        # Transpose the list of lists
+        reference_texts = list(map(list, zip(*reference_texts)))
         return {'input_text': input_text, 'generated_text': generated_text, 'reference_texts': reference_texts}
 
 
