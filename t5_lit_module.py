@@ -109,8 +109,11 @@ class LitT5(LightningModule):
         generated_text = output['generated_text']
         reference_texts = output['reference_texts']
 
+        # Transpose the list of lists
+        reference_texts_t = list(map(list, zip(*reference_texts)))
+
         # Update suffices as we are only interested in epoch score
-        self.bleu_metric.update(generated_text, reference_texts)
+        self.bleu_metric.update(generated_text, reference_texts_t)
 
         # This is only for validation on rightshifted explanation_1
         outputs: Seq2SeqLMOutput = self.model(
@@ -130,7 +133,7 @@ class LitT5(LightningModule):
         return {'val_loss': val_loss,
                 'input_text': input_text,
                 'generated_text': generated_text,
-                'reference_texts': reference_texts}
+                'reference_texts': reference_texts_t}
 
     def configure_optimizers(self):
         # Might also add lr_scheduler
@@ -178,9 +181,12 @@ class LitT5(LightningModule):
         generated_text = output['generated_text']
         reference_texts = output['reference_texts']
 
+        # Transpose the list of lists
+        reference_texts_t = list(map(list, zip(*reference_texts)))
+
         # Update suffices as we are only interested in epoch score
-        self.bleu_metric.update(generated_text, reference_texts)
-        self.chrf_metric.update(generated_text, reference_texts)
+        self.bleu_metric.update(generated_text, reference_texts_t)
+        self.chrf_metric.update(generated_text, reference_texts_t)
         for i in range(3):
             self.bert_metric.update(generated_text, reference_texts[i])
             self.rouge_metric.update(generated_text, reference_texts[i])
@@ -219,8 +225,6 @@ class LitT5(LightningModule):
             batch[f'explanation_{i}'], skip_special_tokens=True) for i in range(1, 4)]
         input_text = self.tokenizer.batch_decode(
             batch['input_ids'], skip_special_tokens=True)
-        # Transpose the list of lists
-        reference_texts = list(map(list, zip(*reference_texts)))
         return {'input_text': input_text, 'generated_text': generated_text, 'reference_texts': reference_texts}
 
 
