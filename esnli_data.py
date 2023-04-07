@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from datasets import load_dataset, load_from_disk
 from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader
@@ -15,7 +13,6 @@ class ESNLIDataModule(LightningDataModule):
         eval_batch_size: int = 64,
         max_source_length: int = 512,
         max_target_length: int = 128,
-        classify: bool = False,
     ):
         super().__init__()
         self.model_name_or_path = model_name_or_path
@@ -25,8 +22,6 @@ class ESNLIDataModule(LightningDataModule):
 
         self.max_source_length = max_source_length
         self.max_target_length = max_target_length
-
-        self.classify = classify
 
         self.dataset_name_or_path = 'esnli' \
             if dataset_path is None else dataset_path
@@ -116,10 +111,8 @@ class ESNLIDataModule(LightningDataModule):
         model_inputs = self.tokenizer(
             input_text, truncation=True, max_length=self.max_source_length)
 
-        # If we request the int labels for the classification task
-        if self.classify:
-            model_inputs["int_labels"] = examples["label"]
-            return model_inputs
+        # The inference labels
+        model_inputs["int_labels"] = examples["label"]
 
         # Tokenize first explanation and add as "labels" to model inputs
         targets = self.tokenizer(
@@ -140,7 +133,7 @@ class ESNLIDataModule(LightningDataModule):
 
 
 if __name__ == "__main__":
-    dm = ESNLIDataModule(classify=True)
+    dm = ESNLIDataModule()
     dm.setup()
 
     # Prints the first batch of the training set

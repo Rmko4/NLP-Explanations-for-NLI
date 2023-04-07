@@ -28,6 +28,7 @@ def main(hparams):
         project="FLAN-T5-ESNLI",
         save_dir="logs/",
         log_model="all",
+        anonymous="allow",
     )
 
     hparams.data_path = os.path.expanduser(hparams.data_path)
@@ -44,7 +45,6 @@ def main(hparams):
         dataset_path=hparams.data_path,
         train_batch_size=hparams.train_batch_size,
         eval_batch_size=hparams.eval_batch_size,
-        classify=hparams.classify,
     )
 
     # data_module.setup()
@@ -63,7 +63,7 @@ def main(hparams):
     else:
         model = LitT5Classify(model_name_or_path=hparams.model_name,
                               learning_rate=hparams.learning_rate,
-                              checkpoint_path=hparams.checkpoint_load_path)
+                              checkpoint_path_main_model=hparams.checkpoint_load_path)
 
 
     # Create checkpoint callback

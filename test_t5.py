@@ -55,7 +55,8 @@ def main(hparams):
         name=run_name,
         project="FLAN-T5-ESNLI",
         save_dir="logs/",
-        log_model="all"
+        log_model="all",
+        anonymous="allow",
     )
 
     hparams.data_path = os.path.expanduser(hparams.data_path)
@@ -69,7 +70,6 @@ def main(hparams):
         model_name_or_path=hparams.model_name,
         dataset_path=hparams.data_path,
         eval_batch_size=hparams.eval_batch_size,
-        classify=hparams.classify,
     )
 
     # Load model from checkpoint
@@ -96,7 +96,7 @@ def main(hparams):
     if test_:
         trainer.test(model, datamodule=data_module)
     else:
-    # Predict with model
+        # Predict with model
         out = trainer.predict(model, datamodule=data_module)
 
         if hparams.classify:
@@ -105,8 +105,10 @@ def main(hparams):
             predicted_labels = [batch['predicted_label'] for batch in out]
 
             # Flatten lists
-            reference_labels = [item for sublist in reference_labels for item in sublist]
-            predicted_labels = [item for sublist in predicted_labels for item in sublist]
+            reference_labels = [
+                item for sublist in reference_labels for item in sublist]
+            predicted_labels = [
+                item for sublist in predicted_labels for item in sublist]
 
             # Make pandas dataframe out of reference and predicted label
             df = pd.DataFrame(
@@ -115,7 +117,8 @@ def main(hparams):
             )
 
             # Save as csv
-            df.to_csv(f"{hparams.results_save_path}/{run_name}.csv", index=False)
+            df.to_csv(
+                f"{hparams.results_save_path}/{run_name}.csv", index=False)
         else:
             # Remove batch dimension
             input_texts = [batch['input_text'] for batch in out]
@@ -124,7 +127,8 @@ def main(hparams):
 
             # Flatten lists
             input_texts = [item for sublist in input_texts for item in sublist]
-            generated_texts = [item for sublist in generated_texts for item in sublist]
+            generated_texts = [
+                item for sublist in generated_texts for item in sublist]
 
             # Flatten reference texts
             flattened_reference_texts = []
@@ -136,13 +140,15 @@ def main(hparams):
 
             # Make pandas dataframe out of input, generated and reference texts
             df = pd.DataFrame(
-                list(zip(input_texts, generated_texts, reference_texts[0], reference_texts[1], reference_texts[2])),
-                columns=['input_text', 'generated_text', 'reference_texts_0', 'reference_texts_1', 'reference_texts_2']
+                list(zip(input_texts, generated_texts,
+                     reference_texts[0], reference_texts[1], reference_texts[2])),
+                columns=['input_text', 'generated_text', 'reference_texts_0',
+                         'reference_texts_1', 'reference_texts_2']
             )
 
             # Save as csv
-            df.to_csv(f"{hparams.results_save_path}/{run_name}.csv", index=False)
-
+            df.to_csv(
+                f"{hparams.results_save_path}/{run_name}.csv", index=False)
 
 
 if __name__ == "__main__":
