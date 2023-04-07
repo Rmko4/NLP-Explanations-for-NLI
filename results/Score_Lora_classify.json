@@ -1,0 +1,12 @@
+{
+    "val/acc": 0.8832451105117798,
+    "val/f1": 0.8832451105117798,
+    "epoch": 0,
+    "trainer/global_step": 0,
+    "_timestamp": 1680709823.9568202,
+    "_runtime": 29.90736436843872,
+    "_step": 0,
+    "_wandb": {
+        "runtime": 45
+    }
+}

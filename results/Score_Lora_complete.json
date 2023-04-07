@@ -1,0 +1,29 @@
+{
+    "test/blue": 0.44206005334854126,
+    "test/chrf": 0.5242488980293274,
+    "test/bert/precision": 0.9753981828689575,
+    "test/bert/recall": 0.9740857481956482,
+    "test/bert/f1": 0.9747322201728821,
+    "test/rouge/rouge1_fmeasure": 0.46326953172683716,
+    "test/rouge/rouge1_precision": 0.5260912775993347,
+    "test/rouge/rouge1_recall": 0.4813414216041565,
+    "test/rouge/rouge2_fmeasure": 0.24767719209194183,
+    "test/rouge/rouge2_precision": 0.2810731530189514,
+    "test/rouge/rouge2_recall": 0.2589530348777771,
+    "test/rouge/rougeL_fmeasure": 0.4056725800037384,
+    "test/rouge/rougeL_precision": 0.45956870913505554,
+    "test/rouge/rougeL_recall": 0.4219931960105896,
+    "test/rouge/rougeLsum_fmeasure": 0.4079819917678833,
+    "test/rouge/rougeLsum_precision": 0.46294933557510376,
+    "test/rouge/rougeLsum_recall": 0.4239969253540039,
+    "test/acc": 0.8832451105117798,
+    "test/f1": 0.8832451105117798,
+    "summary": {
+        "test/chrf": 0.5242488980293274,
+        "test/rouge/rouge1_fmeasure": 0.46326953172683716,
+        "test/rouge/rouge2_fmeasure": 0.24767719209194183,
+        "test/bert/f1": 0.9747322201728821,
+        "test/acc": 0.8832451105117798,
+        "test/f1": 0.8832451105117798
+    }
+}

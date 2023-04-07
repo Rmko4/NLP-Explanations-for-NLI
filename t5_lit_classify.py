@@ -110,8 +110,8 @@ class LitT5Classify(LightningModule):
         self.acc_metric.update(y_hat, y_target)
         self.f1_metric.update(y_hat, y_target)
 
-        self.log_dict({'val/acc': self.acc_metric,
-                       'val/f1': self.f1_metric,
+        self.log_dict({'test/acc': self.acc_metric,
+                       'test/f1': self.f1_metric,
                        }, prog_bar=True)
 
     def predict_step(self, batch, batch_idx, dataloader_idx=0):

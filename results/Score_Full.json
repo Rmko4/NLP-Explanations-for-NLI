@@ -1,0 +1,27 @@
+{
+    "test/blue": 0.4532872140407562,
+    "test/chrf": 0.5224924087524414,
+    "test/bert/precision": 0.9754949808120728,
+    "test/bert/recall": 0.9740464687347412,
+    "test/bert/f1": 0.9747609496116638,
+    "test/rouge/rouge1_fmeasure": 0.4686151146888733,
+    "test/rouge/rouge1_precision": 0.5408427119255066,
+    "test/rouge/rouge1_recall": 0.4758104383945465,
+    "test/rouge/rouge2_fmeasure": 0.24967992305755615,
+    "test/rouge/rouge2_precision": 0.2899782359600067,
+    "test/rouge/rouge2_recall": 0.25411978363990784,
+    "test/rouge/rougeL_fmeasure": 0.41248926520347595,
+    "test/rouge/rougeL_precision": 0.47494059801101685,
+    "test/rouge/rougeL_recall": 0.41967278718948364,
+    "test/rouge/rougeLsum_fmeasure": 0.41486164927482605,
+    "test/rouge/rougeLsum_precision": 0.47832101583480835,
+    "test/rouge/rougeLsum_recall": 0.42180779576301575,
+    "epoch": 0,
+    "trainer/global_step": 0,
+    "_timestamp": 1680771888.9566953,
+    "_runtime": 875.796763420105,
+    "_step": 0,
+    "_wandb": {
+        "runtime": 875
+    }
+}
