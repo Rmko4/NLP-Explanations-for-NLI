@@ -13,18 +13,17 @@ class LitT5Classify(LightningModule):
     def __init__(
         self,
         model_name_or_path: str = "google/flan-t5-small",
-        checkpoint_path: str = None,
+        checkpoint_path_main_model: str = None,
         learning_rate: float = 1e-4,
         weight_decay: float = 0.0,
         n_hidden: int = 256,
         n_output: int = 3,
         m_h_attn_dropout: float = 0.2,
-        **kwargs,
     ):
         super().__init__()
-        if checkpoint_path:
+        if checkpoint_path_main_model:
             model = LitT5.load_from_checkpoint(
-                checkpoint_path=checkpoint_path,
+                checkpoint_path=checkpoint_path_main_model,
             )
             self.encoder = model.get_encoder()
         else:
