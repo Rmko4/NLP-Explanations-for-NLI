@@ -24,7 +24,7 @@ The model that is trained for the task of explanation generation for natural lan
 ![Model architecture diagram](images/model_architecture.png)
 ![T5 Block](images/T5_block.png)
 
-The main model with the Language Modelling head (LM Head) is wrapped in the [LitT5](t5_lit_module.py) class. The model with the probing classifier for the inference label includes the T5 Encoder and Label Head and is wrapped in [LitT5Classify](t5_lit_classify.py).  
+The main model with the Language Modelling head (LM Head) is wrapped in the [LitT5](source/t5_lit_module.py) class. The model with the probing classifier for the inference label includes the T5 Encoder and Label Head and is wrapped in [LitT5Classify](source/t5_lit_classify.py).  
 Both models are a [LightningModule](https://lightning.ai/docs/pytorch/stable/common/lightning_module.html) from the PyTorch Lightning framework.
 
 ## Running the code
@@ -102,4 +102,4 @@ The following prediction specific options are available:
 The code will write the results to a csv file to the specified path.
 
 ### Evaluation of generated explanations with Inseq
-A notebook for inspecting the generated explanations with inference labels using Inseq is found at [inseq_evaluation.ipynb](https://github.com/Rmko4/NLP-Explanations-for-NLI/blob/main/source/inseq_evaluation.ipynb).
+A notebook for inspecting the generated explanations with inference labels using Inseq is found at [inseq_evaluation.ipynb](source/inseq_evaluation.ipynb).

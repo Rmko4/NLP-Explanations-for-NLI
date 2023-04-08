@@ -18,9 +18,9 @@ module load CUDA
 source /scratch/$USER/envs/nlpenv/bin/activate
 
 # cd to working directory (repo)
-cd $TMPDIR/NLP-Explanations-for-NLI/
+cd $TMPDIR/NLP-Explanations-for-NLI
 
-python3 train_t5.py \
+python3 source/train_t5.py \
 --model_name google/flan-t5-base \
 --data_path /scratch/$USER/datasets/esnli_classify \
 --run_name Classify-Train-Lora \

@@ -24,7 +24,7 @@ source /data/$USER/.envs/nlpenv/bin/activate
 # cd do working directory (repo)
 cd $TMPDIR/NLP-Explanations-for-NLI/
 
-python3 train_t5.py \
+python3 source/train_t5.py \
 --model_name google/flan-t5-base \
 --data_path /data/$USER/datasets/esnli \
 --checkpoint_save_path /data/$USER/checkpoints/ \
