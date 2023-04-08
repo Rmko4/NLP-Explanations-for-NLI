@@ -59,7 +59,7 @@ The following options are shared among the training, evaluation and prediction s
 To train the model on the training set, run the following command:
 
 ```bash
-python train_t5.py [options]
+python source/train_t5.py [options]
 ```
 The following training specific options are available:
 - **--checkpoint_save_path** (*str*) (default: '~/models/'): The path to the directory where checkpoints will be saved during training. The checkpoint files will be saved in this directory as '{run_name}-{time}-{epoch:02d}-{val/loss:.2f}.ckpt'.
@@ -82,7 +82,7 @@ When *--fine_tune_mode* 'lora' is specified, the following additional options ar
 To evaluate the model on the test set, run the following command:
 
 ```bash
-python evaluate_t5.py [options]
+python source/evaluate_t5.py [options]
 ```
 The following evaluation specific options are available:
 - **--limit_test_batches** (*int*) (default: None): The number of batches to use for testing. If specified, only this many batches will be used for testing. Useful for quick testing.
@@ -93,7 +93,7 @@ The code will write the results to the WandB dashboard.
 To predict the outputs of the model given the test set, run the following command:
 
 ```bash
-python predict_t5.py [options]
+python source/predict_t5.py [options]
 ```
 The following prediction specific options are available:
 - **--results_save_path** (*str*) (default: 'results/'): The path to the directory where the prediction results will be saved. The results will be saved in this directory as '{run_name}.csv'.
@@ -102,4 +102,4 @@ The following prediction specific options are available:
 The code will write the results to a csv file to the specified path.
 
 ### Evaluation of generated explanations with Inseq
-A notebook for inspecting the generated explanations with inference labels using Inseq is found at [inseq_evaluation.ipynb](inseq_evaluation.ipynb).
+A notebook for inspecting the generated explanations with inference labels using Inseq is found at [source/inseq_evaluation.ipynb](inseq_evaluation.ipynb).
