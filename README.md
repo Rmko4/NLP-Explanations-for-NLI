@@ -54,6 +54,8 @@ The following options are shared among the training, evaluation and prediction s
 - **--run_name** (*str*) (default: 'Fine-Tuning'): The name of the run. This will be used to identify the training run in WandB and in the saved checkpoints and results.
 - **--checkpoint_load_path** (*str*) (default: None): The path to the directory where a checkpoint will be loaded from. If specified, the model will be initialized from this checkpoint before training.
 - **--eval_batch_size** (*int*) (default: 8): The batch size to use for non-training purposes. This is the number of examples that will be used to evaluate the model at each step of validation. This is also the batch_size that will be used to test and generate predictions.
+- **--classify** (*bool*) (default: False): Whether to use the model with the probing classifier for the inference label. If set to True, the model will be training/evaluating/predicting with the probing classifier for the inference label.
+
 
 ### Training the model
 To train the model on the training set, run the following command:
