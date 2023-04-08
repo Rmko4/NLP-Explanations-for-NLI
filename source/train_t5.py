@@ -94,8 +94,9 @@ def train(hparams):
     )
 
     # Train Model
-    trainer.fit(model, data_module, ckpt_path=hparams.checkpoint_load_path)
-
+    # When training classifier we should not use checkpoint state for training of main model.
+    ckpt_path = hparams.checkpoint_load_path if not hparams.classify else None
+    trainer.fit(model, data_module, ckpt_path=ckpt_path)
 if __name__ == "__main__":
     hparams = get_args()
     train(hparams)
