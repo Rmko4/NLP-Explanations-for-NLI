@@ -21,7 +21,7 @@ source /scratch/$USER/envs/nlpenv/bin/activate
 # cd to working directory (repo)
 cd $TMPDIR/NLP-Explanations-for-NLI/
 
-python3 test_t5.py \
+python3 evaluate_t5.py \
 --model_name google/flan-t5-base \
 --data_path /scratch/$USER/datasets/esnli_classify \
 --checkpoint_load_path /scratch/$USER/checkpoints/model_lora_classifier \

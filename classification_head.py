@@ -50,12 +50,16 @@ class ClassificationHeadAttn(nn.Module):
     def forward(self, x, attention_mask):
         bool_attn_mask = self._preprocess_attention_mask(attention_mask)
         attn_out, _ = self.m_h_attn(x, x, x, attn_mask=bool_attn_mask)
-        # average over the sequence dimension
+
+        # Average pooling over the sequence dimension
         masked_attn_out = attention_mask.unsqueeze(-1) * attn_out
         avg_pool = torch.mean(masked_attn_out, dim=1)
+
+        # Linear feedforward
         x = self.l1(avg_pool)
         x = self.ReLU(x)
         logits = self.l_out(x)
+
         return logits
 
 

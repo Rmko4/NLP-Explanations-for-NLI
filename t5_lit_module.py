@@ -1,11 +1,7 @@
 from enum import Enum
 from typing import List, Union
 
-import numpy as np
-import torch
-# Import Bertscore, bleuscore and rougescore
 import torchmetrics.text as textmetrics
-import wandb
 from peft import LoraConfig, TaskType, get_peft_model, PeftModelForSeq2SeqLM
 from pytorch_lightning import LightningModule
 from torch.optim import AdamW
@@ -44,17 +40,14 @@ class LitT5(LightningModule):
         self.save_hyperparameters(ignore=get_ignore_params(fine_tune_mode))
 
         self._load_model()
+        
         self.generation_config = GenerationConfig.from_pretrained(
             model_name_or_path)
         self.generation_config.max_new_tokens = 128
         self.tokenizer: T5Tokenizer = T5Tokenizer.from_pretrained(
             model_name_or_path)
 
-        self.bleu_metric = textmetrics.BLEUScore(n_gram=3)
-        self.chrf_metric = textmetrics.CHRFScore()
-        self.rouge_metric = textmetrics.ROUGEScore()
-        self.perplexity_metric = textmetrics.Perplexity(ignore_index=-100)
-        self.bert_metric = textmetrics.BERTScore()
+        self._load_metrics()
 
         self.train_loss_history = []
 
@@ -71,6 +64,13 @@ class LitT5(LightningModule):
             self.model: PeftModelForSeq2SeqLM = get_peft_model(
                 self.model, self.peft_config)
 
+    def _load_metrics(self):
+        self.bleu_metric = textmetrics.BLEUScore(n_gram=3)
+        self.chrf_metric = textmetrics.CHRFScore()
+        self.rouge_metric = textmetrics.ROUGEScore()
+        self.perplexity_metric = textmetrics.Perplexity(ignore_index=-100)
+        self.bert_metric = textmetrics.BERTScore()
+
     def get_encoder(self):
         if self.hparams.fine_tune_mode == FineTuneMode.LORA:
             return self.model.base_model.get_encoder()
@@ -84,6 +84,8 @@ class LitT5(LightningModule):
         outputs: Seq2SeqLMOutput = self(**batch)
         loss = outputs.loss
 
+        # logs metrics for each training_step,
+        # and the average across the epoch, to the progress bar and logger
         self.log('train/loss_epoch', loss, on_step=False, on_epoch=True)
         self.log('train/loss_step', loss, on_step=True,
                  on_epoch=False, prog_bar=True)
@@ -97,10 +99,6 @@ class LitT5(LightningModule):
                      on_step=True, on_epoch=False, prog_bar=True)
             self.train_loss_history = []
 
-        # logs metrics for each training_step,
-        # and the average across the epoch, to the progress bar and logger
-        # self.log('train/loss', loss, on_step=True,
-        #          on_epoch=True, prog_bar=True, logger=True)
         return {"loss": loss}
 
     def validation_step(self, batch, batch_idx, dataloader_idx=0):
@@ -128,8 +126,7 @@ class LitT5(LightningModule):
                        'val/blue': self.bleu_metric,
                        'val/perplexity': self.perplexity_metric,
                        }, prog_bar=True)
-        # self.log_dict(self.rouge_metric, prog_bar=True)
-        # self.log_dict(metric_dict, prog_bar=True)
+
         return {'val_loss': val_loss,
                 'input_text': input_text,
                 'generated_text': generated_text,

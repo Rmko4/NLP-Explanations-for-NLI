@@ -19,7 +19,7 @@ from t5_lit_classify import LitT5Classify
 time = datetime.now().strftime("%m%d-%H:%M:%S")
 
 
-def main(hparams):
+def train(hparams):
     run_name = f"{hparams.run_name}_{time}"
 
     # Create wandb logger
@@ -31,6 +31,7 @@ def main(hparams):
         anonymous="allow",
     )
 
+    # Expands paths
     hparams.data_path = os.path.expanduser(hparams.data_path)
     if hparams.checkpoint_load_path:
         hparams.checkpoint_load_path = os.path.expanduser(
@@ -47,9 +48,6 @@ def main(hparams):
         eval_batch_size=hparams.eval_batch_size,
     )
 
-    # data_module.setup()
-    # data = next(iter(data_module.train_dataloader()))
-
     # Create model
     if not hparams.classify:
         if hparams.checkpoint_load_path:
@@ -58,34 +56,30 @@ def main(hparams):
             )
         else:
             model = LitT5(model_name_or_path=hparams.model_name,
-                      fine_tune_mode=hparams.fine_tune_mode,
-                      learning_rate=hparams.learning_rate)
+                          fine_tune_mode=hparams.fine_tune_mode,
+                          learning_rate=hparams.learning_rate)
     else:
         model = LitT5Classify(model_name_or_path=hparams.model_name,
                               learning_rate=hparams.learning_rate,
                               checkpoint_path_main_model=hparams.checkpoint_load_path)
 
-
     # Create checkpoint callback
     checkpoint_callback = ModelCheckpoint(
         monitor='val/loss',
         dirpath=hparams.checkpoint_save_path,
-        # No f string formating yet
-        filename=time + 'esnli-{epoch:02d}-{val/loss:.2f}',
+        filename=f'{run_name}-{time}-' + 'esnli-{epoch:02d}-{val/loss:.2f}',
         every_n_train_steps=hparams.val_check_interval,
     )
 
     callbacks = [checkpoint_callback]
 
     if not hparams.classify:
+        # Add callback for logging text generation during training.
         log_generated_text_callback = LogGeneratedTextCallback(
             n_samples=hparams.n_text_samples,
             log_every_n_steps=hparams.log_every_n_generated)
 
         callbacks.append(log_generated_text_callback)
-
-    # Note that default behaviour does checkpointing for state of last training epoch
-    # callbacks = None
 
     # Create trainer
     trainer = Trainer(
@@ -94,20 +88,14 @@ def main(hparams):
         max_epochs=hparams.max_epochs,
         logger=wandb_logger,
         log_every_n_steps=hparams.log_every_n_steps,
-        # Do validation every 50 steps
         val_check_interval=hparams.val_check_interval,
         limit_val_batches=hparams.limit_val_batches,
         callbacks=callbacks,
     )
 
-    # Validate
-    # trainer.validate(model, data_module)
-
-    # Train
-    ckpt_path = hparams.checkpoint_load_path if not hparams.classify else None
-    trainer.fit(model, data_module, ckpt_path=ckpt_path)
-
+    # Train Model
+    trainer.fit(model, data_module, ckpt_path=hparams.checkpoint_load_path)
 
 if __name__ == "__main__":
     hparams = get_args()
-    main(hparams)
+    train(hparams)

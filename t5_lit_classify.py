@@ -21,6 +21,7 @@ class LitT5Classify(LightningModule):
         m_h_attn_dropout: float = 0.2,
     ):
         super().__init__()
+        # Load the encoder from the main model
         if checkpoint_path_main_model:
             model = LitT5.load_from_checkpoint(
                 checkpoint_path=checkpoint_path_main_model,
@@ -28,13 +29,14 @@ class LitT5Classify(LightningModule):
             self.encoder = model.get_encoder()
         else:
             self.encoder = T5EncoderModel.from_pretrained(model_name_or_path)
+        # The encoder itself is not trainable,
+        # as this model is supposed for probing purposes.
         self._freeze_encoder()
 
+        # Takes d_model from the encoder to forward
+        # as embedding dimension for classification head.
         embed_dim = self.encoder.config.d_model
-        # self.classification_head = ClassificationHeadRNN(embed_dim,
-        #  n_hidden,
-        #  n_output,
-        #  )
+
         self.classification_head = ClassificationHeadAttn(embed_dim,
                                                           n_hidden,
                                                           n_output,

@@ -1,14 +1,11 @@
 import argparse
-from typing import Union
-
 
 def get_args():
     parser = argparse.ArgumentParser(
         description='T5 ESNLI Fine-Tuning and Testing')
 
-    # Add arguments here
-    parser.add_argument('--model_name', type=str, default='google/flan-t5-base',
-                        help='The name or path of the pre-trained T5 model to fine-tune.')
+    parser.add_argument('--model_name', type=str, default='google/flan-t5-small',
+                        help='The name or path of the pre-trained T5 model to use.')
     parser.add_argument('--data_path', type=str, default='~/datasets/esnli/',
                         help='The path to the ESNLI dataset.')
     parser.add_argument('--run_name', type=str, default='Fine-Tuning',
@@ -41,7 +38,7 @@ def get_args():
                         help='The number of batches to use for prediction.')
     parser.add_argument('--n_text_samples', type=int, default=10,
                         help='The number of samples to generate for each logging interval.')
-    parser.add_argument('--log_every_n_generated', type=int, default=20,
+    parser.add_argument('--log_every_n_generated', type=int, default=50,
                         help='The number of training steps between each logging of generated samples.')
     parser.add_argument('--lora_r', type=int, default=8, help='LORA R value')
     parser.add_argument('--lora_alpha', type=int,
@@ -50,6 +47,6 @@ def get_args():
                         default=0.1, help='LORA dropout value')
     parser.add_argument('--classify', type=bool, default=False,
                         help='Wether to load the dataset with int labels for classification')
-    
+
     args = parser.parse_args()
     return args

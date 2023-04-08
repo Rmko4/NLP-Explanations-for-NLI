@@ -2,8 +2,6 @@ from typing import Any
 
 import pandas as pd
 import pytorch_lightning as pl
-import torch
-import wandb
 from pytorch_lightning.callbacks import Callback
 from pytorch_lightning.loggers import WandbLogger
 

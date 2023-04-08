@@ -1,3 +1,4 @@
+# Simple script to download an artifact (checkpoint) from wandb
 import wandb
 
 artifact_str = ...

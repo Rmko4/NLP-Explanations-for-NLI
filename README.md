@@ -16,15 +16,16 @@ The following features are present for each data point:
 - Explanation_2: a string feature.
 - Explanation_3: a string feature.
 
-The code for the data and pre-processing is encapsulated in [ESNLIDataModule](esnli_data.py). This class extends [LightningDataModule](https://lightning.ai/docs/pytorch/stable/data/datamodule.html?highlight%3Ddatamodule) of the PyTorch Lightning framework.
+The code for the data and pre-processing is encapsulated in [ESNLIDataModule](esnli_data.py), which is a [LightningDataModule](https://lightning.ai/docs/pytorch/stable/data/datamodule.html?highlight%3Ddatamodule) of the PyTorch Lightning framework.
 
 ### Model
-The model that is trained for the task of explanation generation for natural language inference (NLI) is the [T5 model](https://huggingface.co/docs/transformers/model_doc/t5). The T5 model is an encoder-decoder model. The Flan-T5-Base model has been extensively used for the project. However, any pre-trained T5 model is supported. A diagram of the complete architecture is shown below.
+The model that is trained for the task of explanation generation for natural language inference (NLI) is the [T5 model](https://huggingface.co/docs/transformers/model_doc/t5). The T5 model is an encoder-decoder model. The Flan-T5-Base model has been extensively used for the project. However, any pre-trained T5 model is supported by the project code. A diagram of the complete architecture is shown below.
 
 ![Model architecture diagram](images/model_architecture.png)
 ![T5 Block](images/T5_block.png)
 
-The main model with the Language Modelling head (LM Head) is wrapped in used to generate the explanations. The model with the 
+The main model with the Language Modelling head (LM Head) is wrapped in the [LitT5](t5_lit_module.py) class. The model with the probing classifier for the inference label includes the T5 Encoder and Label Head and is wrapped in [LitT5Classify](t5_lit_classify.py).  
+Both models are a [LightningModule](https://lightning.ai/docs/pytorch/stable/common/lightning_module.html) from the PyTorch Lightning framework.
 
 ## Running the code
 ### Installation
@@ -33,36 +34,72 @@ To install all dependencies, run the following command:
 pip install -r requirements.txt
 ```
 
+### Setup MLOps (Weight & Biases)
+For tracking of training and testing experiments, [Weights and Biases](https://wandb.ai/site) (WandB) is used. To log in for the first time, run the following command, and provide your authorization key:
+```bash
+wandb login
+```
+Note that the experiments may be run in Anonymous mode (without being logged in).
+
 ### Pre-processing data
-The code for training the model performs data preprocessing, so there is no need to preprocess the data separately.
+The code for training, evaluation, and the model performs data preprocessing, so there is no need to preprocess the data separately.
 
-### Training the Models
-To train the model, run the following command:
+There are certain parameters that may be set from the command line when training or testing the model. These parameters are described in the following.
 
-css
-Copy code
-python train.py [options]
-Possible options include:
+### Shared options
+The following options are shared among the training, evaluation and prediction scripts:
 
---model_type: the type of model to use (default: esnli)
---num_epochs: the number of epochs to train for (default: 10)
---batch_size: the batch size to use during training (default: 32)
---learning_rate: the learning rate to use during training (default: 0.001)
-The code will write the results to a WANDB dashboard and to standard out.
+- **--model_name** (*str*) (default: 'google/flan-t5-small'): The name or path of the pre-trained model to use. The models are downloaded via the [Hugging Face Hub](https://huggingface.co/models).
+- **--data_path** (*str*) (default: '~/datasets/esnli'): The path to the pre-processed ESNLI dataset. If the dataset is not at the specified location, the dataset will be pre-processed and saved to the specified path.
+- **--run_name** (*str*) (default: 'Fine-Tuning'): The name of the run. This will be used to identify the training run in WandB and in the saved checkpoints and results.
+- **--checkpoint_load_path** (*str*) (default: None): The path to the directory where a checkpoint will be loaded from. If specified, the model will be initialized from this checkpoint before training.
+- **--eval_batch_size** (*int*) (default: 8): The batch size to use for non-training purposes. This is the number of examples that will be used to evaluate the model at each step of validation. This is also the batch_size that will be used to test and generate predictions.
 
-### Using Pre-trained Models for Prediction
-To use a pre-trained model for prediction, run the following command:
+### Training the model
+To train the model on the training set, run the following command:
 
-css
-Copy code
-python predict.py [options]
-Possible options include:
+```bash
+python train_t5.py [options]
+```
+The following training specific options are available:
+- **--checkpoint_save_path** (*str*) (default: '~/models/'): The path to the directory where checkpoints will be saved during training. The checkpoint files will be saved in this directory as '{run_name}-{time}-{epoch:02d}-{val/loss:.2f}.ckpt'.
+- **--fine_tune_mode** (*str*) (default: 'full'): The mode to use for fine-tuning. Can be either "full", "lora". "full" fine-tunes all layers of the model, "lora" fine-tunes only the LoRA layer.
+- **--learning_rate** (*float*) (default: 1e-4): The learning rate to use for training. This is the rate at which the model parameters will be updated during training.
+- **--train_batch_size** (*int*) (default: 8): The batch size to use for training. This is the number of examples that will be used to update the model parameters at each step of training.
+- **--max_epochs** (*int*) (default: 3): The maximum number of epochs to train for. An epoch is a full pass through the entire training dataset.
+- **--log_every_n_steps** (*int*) (default: 50): The number of training steps till logging training progress. This reports the average training loss over the last n steps.
+- **--val_check_interval** (*int*) (default: 1000): The number of training steps between each validation run. This is the number of steps at which the model will be evaluated on the validation dataset to monitor its performance.
+- **--limit_val_batches** (*int*) (default: None): The number of batches to use for validation. If specified, only this many batches will be used for validation. Useful for getting a rough estimate of model performance during training.
+- **--n_text_samples** (*int*) (default: 10): The number of explanations to generate for each logging interval specified in *--log_every_n_generated*. During training, the model will generate this many explanations and log them in WandB for inspection of generation during training. If this exceeds the number specified in *--eval_batch_size*, the model will generate this number of explanations.
+- **--log_every_n_generated** (*int*) (default: 50): The number of training steps between each logging of generated explanations.
 
---model_type: the type of pre-trained model to use (default: esnli)
---model_path: the path to the pre-trained model file (default: ./models/esnli_model.pt)
---data_path: the path to the data file to predict (default: ./data/test.csv)
---output_path: the path to the output file (default: ./results/predictions.csv)
-The code will write the predictions to a CSV file.
+When *--fine_tune_mode* 'lora' is specified, the following additional options are available:
+- **--lora_r** (*int*) (default: 8): The LoRA R value
+- **--lora_alpha** (*int*) (default: 32): The LoRA alpha value
+- **--lora_dropout** (*float*) (default: 0.1): The LoRA dropout value
 
-### Evaluation
-The code provides metrics for the model and cannot be customized.
+### Evaluating the model
+To evaluate the model on the test set, run the following command:
+
+```bash
+python evaluate_t5.py [options]
+```
+The following evaluation specific options are available:
+- **--limit_test_batches** (*int*) (default: None): The number of batches to use for testing. If specified, only this many batches will be used for testing. Useful for quick testing.
+
+The code will write the results to the WandB dashboard.
+
+### Predicting outputs of the model (Generating)
+To predict the outputs of the model given the test set, run the following command:
+
+```bash
+python predict_t5.py [options]
+```
+The following prediction specific options are available:
+- **--results_save_path** (*str*) (default: 'results/'): The path to the directory where the prediction results will be saved. The results will be saved in this directory as '{run_name}.csv'.
+- **--limit_predict_batches** (*int*) (default: None): The number of batches to use for prediction. If specified, only this many batches will be used for prediction. Useful for quick testing.
+
+The code will write the results to a csv file to the specified path.
+
+### Evaluation of generated explanations with Inseq
+A notebook for inspecting the generated explanations with inference labels using Inseq is found at [inseq_evaluation.ipynb](inseq_evaluation.ipynb).
