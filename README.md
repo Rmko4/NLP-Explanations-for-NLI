@@ -104,4 +104,4 @@ The following prediction specific options are available:
 The code will write the results to a csv file to the specified path.
 
 ### Evaluation of generated explanations with Inseq
-A notebook for inspecting the generated explanations with inference labels using Inseq is found at [inseq_evaluation.ipynb](source/inseq_evaluation.ipynb).
+A notebook for inspecting the generated explanations with inference labels using Inseq is found at [inseq_evaluation.ipynb](source/inseq_evaluation.ipynb). More analysis for the classification task with relation to negation can be found at [numeric_evaluation.ipynb](https://github.com/Rmko4/NLP-Explanations-for-NLI/blob/main/source/numeric_evaluation.ipynb).
