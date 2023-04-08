@@ -98,7 +98,7 @@ To predict the outputs of the model given the test set, run the following comman
 python source/predict_t5.py [options]
 ```
 The following prediction specific options are available:
-- **--results_save_path** (*str*) (default: 'results/'): The path to the directory where the prediction results will be saved. The results will be saved in this directory as '{run_name}.csv'.
+- **--results_save_path** (*str*) (default: 'results/'): The path to the directory where the prediction results will be saved. The results will be saved in this directory as '{run_name}_{time}.csv'.
 - **--limit_predict_batches** (*int*) (default: None): The number of batches to use for prediction. If specified, only this many batches will be used for prediction. Useful for quick testing.
 
 The code will write the results to a csv file to the specified path.
