@@ -16,7 +16,7 @@ The following features are present for each data point:
 - Explanation_2: a string feature.
 - Explanation_3: a string feature.
 
-The code for the data and pre-processing is encapsulated in [ESNLIDataModule](esnli_data.py), which is a [LightningDataModule](https://lightning.ai/docs/pytorch/stable/data/datamodule.html?highlight%3Ddatamodule) of the PyTorch Lightning framework.
+The code for the data and pre-processing is encapsulated in [ESNLIDataModule](source/esnli_data.py), which is a [LightningDataModule](https://lightning.ai/docs/pytorch/stable/data/datamodule.html?highlight%3Ddatamodule) of the PyTorch Lightning framework.
 
 ### Model
 The model that is trained for the task of explanation generation for natural language inference (NLI) is the [T5 model](https://huggingface.co/docs/transformers/model_doc/t5). The T5 model is an encoder-decoder model. The Flan-T5-Base model has been extensively used for the project. However, any pre-trained T5 model is supported by the project code. A diagram of the complete architecture is shown below.
